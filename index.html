@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>타자 뒤집기 대전</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+html,body{margin:0}
+/* Layout: arcade cabinet. HUD bar (title, timer, sound) + team score strip on top, proverb-chance banner, 6x5 word-card board as the stage with
+   event toasts/ink/missiles layered over it, roster + host controls beside it. Students get the board full width with a personal HUD and a big typing bar. */
+:root{
+  color-scheme:dark;
+  --bg:#0a0c18; --surface:#151935; --surface2:#1d2246; --ink:#f1f3ff; --muted:#9aa2c8; --line:#2b3160; --grid:#ffffff0a;
+  --gold:#ffc83d; --gold-deep:#6b4a00; --ok:#3ddc84; --warn:#ffab4a; --blot:#04050b;
+  --t0:#e5484d; --t1:#3e7bfa; --t2:#22a75c; --t3:#d4930f; --t4:#8f5de0;
+  --t5:#13a3a3; --t6:#d84f97; --t7:#a5713f; --t8:#5a5fd0; --t9:#6f7d96;
+  --f-arcade:"Black Han Sans","Do Hyeon","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-card:"Do Hyeon","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --r:12px;
+}
+.t0{--tc:var(--t0)} .t1{--tc:var(--t1)} .t2{--tc:var(--t2)} .t3{--tc:var(--t3)} .t4{--tc:var(--t4)}
+.t5{--tc:var(--t5)} .t6{--tc:var(--t6)} .t7{--tc:var(--t7)} .t8{--tc:var(--t8)} .t9{--tc:var(--t9)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{background-color:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 24px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+
+/* HUD */
+.bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand h1{font-family:var(--f-arcade);font-weight:400;font-size:1.7rem;line-height:1.05;margin:0;letter-spacing:.02em;
+  background:linear-gradient(90deg,var(--t0),var(--gold),var(--t1));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{color:var(--muted);font-size:.8rem}
+.conn{display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.timer{font-family:var(--f-arcade);font-size:2.6rem;line-height:1;min-width:4ch;text-align:center;font-variant-numeric:tabular-nums;padding:6px 16px;border-radius:10px;background:var(--bg);border:2px solid var(--line)}
+.timer.low{color:var(--bg);background:var(--t0);border-color:var(--t0);animation:pulse .5s ease-in-out infinite alternate}
+.timer.fever{border-color:var(--gold);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent)}
+.hudr{justify-self:end;display:flex;align-items:center;gap:10px}
+.phase{color:var(--muted);font-size:.85rem}
+.snd{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 10px;font-size:.8rem}
+.snd[aria-pressed="true"]{border-color:var(--ok);color:var(--ok)}
+@keyframes pulse{to{transform:scale(1.06)}}
+
+.scores{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:baseline;gap:8px;padding:6px 12px;border-radius:10px;
+  background:color-mix(in srgb,var(--tc) 20%,var(--surface));border:1px solid color-mix(in srgb,var(--tc) 55%,var(--surface))}
+.chip .nm{font-family:var(--f-card);font-size:1.05rem;color:color-mix(in srgb,var(--tc) 55%,var(--ink))}
+.chip .n{font-family:var(--f-arcade);font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.chip .u{font-size:.75rem;color:var(--muted)}
+.chip.lead{box-shadow:0 0 0 2px var(--tc),0 0 16px color-mix(in srgb,var(--tc) 55%,transparent)}
+.chip.mine{outline:2px dashed var(--ink);outline-offset:2px}
+.chip.hit{animation:shake .4s}
+
+/* proverb chance */
+.pv{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r);border:2px solid var(--gold);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 22%,var(--surface)),var(--surface));position:relative;overflow:hidden}
+.pv .tag{font-family:var(--f-arcade);font-size:.95rem;color:var(--bg);background:var(--gold);padding:3px 10px;border-radius:6px;white-space:nowrap}
+.pv .txt{flex:1;min-width:0;font-family:var(--f-card);font-size:clamp(1.25rem,2.6vw,2rem);line-height:1.2;color:var(--gold);text-wrap:balance}
+.pv .sec{font-family:var(--f-arcade);font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--gold)}
+.pv .meter{position:absolute;left:0;bottom:0;height:4px;background:var(--gold);transition:width 1s linear}
+.pv.typing{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 50%,transparent),0 0 24px color-mix(in srgb,var(--gold) 40%,transparent)}
+.pv .done{color:var(--ok)}
+
+/* stage */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.boardwrap{position:relative;min-width:0}
+.board{--cols:6;--mcols:5;--ch:clamp(54px,9vh,84px);--cf:clamp(1.05rem,2vw,1.65rem);display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:8px;padding:8px;border-radius:14px;background:var(--surface);border:1px solid var(--line);transition:box-shadow .3s}
+.board.fever{box-shadow:0 0 0 2px var(--gold),0 0 30px color-mix(in srgb,var(--gold) 35%,transparent)}
+.card{position:relative;height:var(--ch);border-radius:10px;display:flex;align-items:center;justify-content:center;
+  background:var(--tc,var(--line));border-bottom:5px solid color-mix(in srgb,var(--tc,var(--line)) 60%,#000);
+  font-family:var(--f-card);font-size:var(--cf);color:#fff;text-shadow:0 2px 0 #0005;padding:0 6px;text-align:center;overflow-wrap:anywhere;
+  transition:box-shadow .15s, transform .15s; user-select:none}
+.card.n{--tc:var(--surface2);color:var(--muted);text-shadow:none}
+.card.hint{box-shadow:0 0 0 4px var(--gold);transform:translateY(-3px)}
+.board[data-n="42"]{--cols:7;--mcols:6;--ch:clamp(50px,7.6vh,74px);--cf:clamp(.95rem,1.75vw,1.45rem)}
+.board[data-n="56"]{--cols:8;--mcols:7;--ch:clamp(46px,6.6vh,66px);--cf:clamp(.9rem,1.5vw,1.3rem)}
+.card.flip{animation:flip .38s ease}
+.card.gone{transform:scale(.15) rotate(-8deg);opacity:0;transition:transform .16s ease-in,opacity .16s ease-in;box-shadow:none}
+.card.spawn{animation:spawn .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes spawn{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.card.mine::after{content:"";position:absolute;inset:-4px;border-radius:13px;border:3px solid var(--ok);animation:fade 1s forwards}
+.card.boom::before{content:"";position:absolute;inset:-10px;border-radius:50%;border:4px solid var(--gold);animation:boom .6s ease-out forwards;pointer-events:none}
+.badge{position:absolute;top:-7px;right:-5px;font-family:var(--f-arcade);font-size:.72rem;line-height:1;padding:4px 7px;border-radius:999px;text-shadow:none;
+  background:var(--gold);color:var(--bg);box-shadow:0 2px 0 var(--gold-deep);animation:bob 1s ease-in-out infinite alternate}
+.badge.i{background:var(--ink);color:var(--blot);box-shadow:0 2px 0 var(--muted)}
+@keyframes bob{to{transform:translateY(-3px)}}
+@keyframes flip{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+@keyframes fade{to{opacity:0}}
+@keyframes boom{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+@keyframes shake{20%{transform:translateX(-6px)}60%{transform:translateX(6px)}}
+
+.float{position:absolute;pointer-events:none;font-family:var(--f-arcade);font-size:1.5rem;color:var(--gold);text-shadow:0 2px 0 #000;animation:up .9s ease-out forwards;z-index:6}
+@keyframes up{to{transform:translateY(-46px);opacity:0}}
+#ink{position:absolute;inset:0;width:100%;height:100%;border-radius:14px;pointer-events:none;opacity:0;z-index:7;touch-action:none}
+#ink.on{pointer-events:auto;opacity:1;cursor:grab}
+#ink.fade{opacity:0;transition:opacity 2.2s ease-in}
+.feed{position:absolute;left:0;right:0;top:12px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;z-index:8}
+.toast{font-family:var(--f-arcade);font-size:clamp(1.2rem,3vw,2.1rem);line-height:1.15;padding:8px 18px;border-radius:12px;text-align:center;max-width:92%;
+  background:color-mix(in srgb,var(--tc,var(--gold)) 85%,#000);color:#fff;border:2px solid #fff3;box-shadow:0 8px 24px #0008;animation:pop 2.4s ease forwards}
+.toast.gold{--tc:var(--gold);color:var(--bg)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}12%{transform:scale(1.08);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+.missile{position:fixed;left:0;top:0;width:44px;height:18px;pointer-events:none;z-index:60}
+
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;z-index:9;
+  background:color-mix(in srgb,var(--bg) 78%,transparent);border-radius:14px;backdrop-filter:blur(2px)}
+.ov{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 26px;text-align:center;max-width:600px;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.ov h2{font-family:var(--f-arcade);font-weight:400;font-size:2rem;line-height:1.15;margin:0;text-wrap:balance}
+.ov p{margin:0;color:var(--muted)}
+.ov .big{font-family:var(--f-arcade);font-size:7rem;line-height:1;color:var(--gold)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;text-align:left}
+.rules div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.85rem;color:var(--muted)}
+.rules b{display:block;font-family:var(--f-card);font-weight:400;font-size:1.05rem;color:var(--ink)}
+.rank{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.qr{background:#fff;padding:10px;border-radius:10px;display:inline-block;line-height:0;align-self:center}
+.qr img{display:block;width:100%;height:auto}
+.ov .qr{width:min(240px,60vw)}
+.invite{display:flex;gap:12px;align-items:center}
+.invite .qr{width:112px;flex:none;padding:6px}
+.invite .url{flex:1;min-width:0;font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;user-select:all}
+.code{font-family:var(--f-arcade);font-size:2.6rem;line-height:1.1;letter-spacing:.08em;color:var(--gold)}
+.ovurl{font-family:var(--f-body);font-size:.95rem;color:var(--ink);overflow-wrap:anywhere;user-select:all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.mvp{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:.9rem}
+.mvp span{padding:3px 10px;border-radius:999px;background:var(--bg)}
+
+/* side */
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel h3{margin:0;font-family:var(--f-arcade);font-weight:400;font-size:1.2rem;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.8rem;color:var(--muted);letter-spacing:.02em}
+.field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 0}
+.btn{border:0;border-radius:10px;padding:11px 14px;background:var(--ink);color:var(--bg);font-weight:700}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.go{background:var(--ok);color:var(--bg);font-family:var(--f-arcade);font-weight:400;font-size:1.1rem}
+.msg{font-size:.85rem;color:var(--muted);margin:0}
+.msg.warn{color:var(--warn)}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.team h4{margin:0 0 6px;font-family:var(--f-card);font-weight:400;font-size:1.05rem;display:flex;justify-content:space-between;color:color-mix(in srgb,var(--tc) 60%,var(--ink))}
+.team h4 .c{font-family:var(--f-body);font-size:.75rem;color:var(--muted)}
+.team ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.team li{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:.85rem;padding:4px 8px;border-radius:7px;
+  background:color-mix(in srgb,var(--tc) 14%,var(--bg));border-left:3px solid var(--tc);min-width:0}
+.team li .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team li .s{font-variant-numeric:tabular-nums;font-weight:700}
+.team li select{font-size:.75rem;padding:1px 2px;border:1px solid var(--line);border-radius:5px;background:var(--surface);max-width:5.2em}
+.team li.off{opacity:.45}
+.team li.empty{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+
+/* student HUD */
+.me{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 14px;border-radius:var(--r);
+  background:color-mix(in srgb,var(--tc,var(--line)) 22%,var(--surface));border:1px solid color-mix(in srgb,var(--tc,var(--line)) 60%,var(--surface))}
+.me .who b{display:block;font-family:var(--f-arcade);font-weight:400;font-size:1.3rem;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me .who span{font-size:.85rem;color:var(--muted)}
+.stat{text-align:center}
+.stat .n{display:block;font-family:var(--f-arcade);font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.stat .l{font-size:.72rem;color:var(--muted);letter-spacing:.04em}
+.stat.combo .n{color:var(--gold)}
+.stat.combo.hot .n{animation:pulse .3s ease-in-out 2 alternate}
+
+/* typing bar */
+.typebar{position:sticky;bottom:env(safe-area-inset-bottom,0px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;gap:10px;align-items:center;z-index:20}
+.typebar input{flex:1;min-width:0;font-family:var(--f-card);font-size:1.9rem;border:3px solid var(--tc,var(--line));border-radius:12px;padding:8px 16px;background:var(--bg)}
+.typebar input:disabled{opacity:.55}
+.typebar .fb{min-width:7.5em;font-family:var(--f-arcade);font-size:1rem;text-align:right}
+.fb.ok{color:var(--ok)} .fb.no{color:var(--warn)} .fb.gold{color:var(--gold)}
+.shake{animation:shake .25s}
+
+.as-player .stage{grid-template-columns:1fr}
+.as-player #pRoster{display:none}
+
+@media (max-width:900px){.stage{grid-template-columns:1fr}}
+@media (max-width:560px){
+  .board{grid-template-columns:repeat(var(--mcols),minmax(0,1fr));gap:6px;padding:6px}
+  .card{height:48px;font-size:.95rem;border-bottom-width:4px}
+  .board[data-n="56"] .card{height:42px;font-size:.85rem}
+  .bar{grid-template-columns:1fr auto}
+  .hudr{display:none}
+  .brand h1{font-size:1.25rem}
+  .timer{font-size:1.9rem}
+  .chip .n{font-size:1.3rem}
+  .me{grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+  .stat .n{font-size:1.5rem}
+  .typebar input{font-size:1.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  .card.flip,.card.spawn,.shake,.card.mine::after,.card.boom::before,.badge,.timer.low,.toast,.float,.chip.hit{animation:none}
+  .card{transition:none}
+  .card.gone{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">
+      <h1>타자 뒤집기 대전</h1>
+      <small class="conn"><span id="dot" class="dot"></span><span id="connTxt">연결 준비 중</span></small>
+    </div>
+    <div id="timer" class="timer">1:30</div>
+    <div class="hudr">
+      <span id="phase" class="phase">대기실</span>
+      <button type="button" id="btnSnd" class="snd" aria-pressed="false">소리 끔</button>
+    </div>
+  </header>
+  <div id="scores" class="scores" aria-label="팀 점수"></div>
+
+  <main class="stage">
+    <section class="boardwrap">
+      <div id="pvBar" class="pv" hidden>
+        <span class="tag">속담 찬스 +100</span>
+        <span id="pvTxt" class="txt"></span>
+        <span id="pvSec" class="sec"></span>
+        <span id="pvMeter" class="meter"></span>
+      </div>
+      <div style="position:relative;margin-top:10px">
+        <div id="board" class="board" aria-label="단어 카드판"></div>
+        <canvas id="ink" aria-hidden="true"></canvas>
+        <div id="feed" class="feed" aria-live="polite"></div>
+        <div id="overlay" class="overlay"><div id="ovBox" class="ov"></div></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section id="pTeacher" class="panel" hidden>
+        <h3>선생님</h3>
+        <p class="msg">게임방을 만들면 학생 참가 링크와 QR 코드가 나옵니다. 학생은 로그인 없이 참가합니다.</p>
+        <button id="btnHost" class="btn go" type="button">새 게임방 만들기</button>
+      </section>
+
+      <form id="pJoin" class="panel" autocomplete="off">
+        <h3>학생 참가</h3>
+        <div class="row">
+          <div class="field"><label for="inSid">학번</label><input id="inSid" inputmode="numeric" maxlength="10" placeholder="10305"></div>
+          <div class="field"><label for="inName">이름</label><input id="inName" maxlength="10" placeholder="김민수"></div>
+        </div>
+        <div class="field" id="codeField"><label for="inCode">방 코드</label><input id="inCode" maxlength="6" placeholder="선생님이 알려 준 코드" autocapitalize="characters" style="text-transform:uppercase"></div>
+        <button id="btnJoin" class="btn go" type="submit">참가하기</button>
+        <p class="msg">팀은 입장하면 무작위로 배정됩니다.</p>
+        <p id="joinMsg" class="msg">진행자 화면을 찾는 중입니다.</p>
+      </form>
+
+      <section id="pPlayer" hidden>
+        <div id="meBox" class="me">
+          <div class="who"><b id="myName"></b><span id="myInfo"></span></div>
+          <div class="stat"><span id="myScore" class="n">0</span><span class="l">내 점수</span></div>
+          <div id="comboBox" class="stat combo"><span id="myCombo" class="n">0</span><span class="l">콤보</span></div>
+        </div>
+        <p id="pMsg" class="msg" style="margin-top:8px"></p>
+        <button type="button" id="btnLeave" class="btn ghost" style="margin-top:8px">나가기</button>
+      </section>
+
+      <section id="pHost" class="panel" hidden>
+        <h3>진행자</h3>
+        <div class="row">
+          <div class="field"><label for="selMax">최대 인원</label><select id="selMax"></select></div>
+          <div class="field"><label for="selTeams">팀 수</label><select id="selTeams"></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="selDur">제한 시간</label>
+            <select id="selDur"><option value="60">60초</option><option value="90">90초</option><option value="120" selected>120초</option><option value="180">180초</option><option value="300">5분</option></select></div>
+          <div class="field"><label for="selLang">단어</label>
+            <select id="selLang"><option value="ko" selected>한글</option><option value="en">영어</option><option value="mix">한글+영어</option></select></div>
+        </div>
+        <div class="field"><label>학생 초대</label>
+          <div class="invite"><div id="qrSmall" class="qr"></div><div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1"><span id="inviteUrl" class="url"></span><button type="button" id="btnCopy" class="btn ghost">링크 복사</button><a id="lnkPlayer" class="btn ghost" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">참가자 화면 열어 보기</a></div></div>
+        </div>
+        <button type="button" id="btnShuffle" class="btn ghost">팀 무작위 재배치</button>
+        <div class="row">
+          <button type="button" id="btnStart" class="btn go">게임 시작</button>
+          <button type="button" id="btnLobby" class="btn ghost">대기실로</button>
+        </div>
+        <p id="hMsg" class="msg">참가자 옆 목록에서 팀을 바꿀 수 있습니다.</p>
+        <p id="netInfo" class="msg"></p>
+        <button type="button" id="btnHostOff" class="btn ghost">게임방 닫기</button>
+      </section>
+
+      <section id="pRoster" class="panel">
+        <h3><span>참가자</span><span id="rosterCnt" class="msg">0 / 30</span></h3>
+        <div id="teams" class="teams"></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="typebar" class="typebar" hidden>
+    <input id="typeIn" aria-label="단어 입력" placeholder="단어 입력 후 Enter" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <span id="fb" class="fb" aria-live="polite"></span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+let N = 30;
+const MAXP = 30, MAXT = 10, V = 3;
+const SIZES = [30, 42, 56];
+const sizeFor = p => p <= 10 ? 30 : p <= 20 ? 42 : 56;
+const GONE_MS = 500;
+const URL_ROOM = (new URLSearchParams(location.search).get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+let ROOM = URL_ROOM;
+const isFile = location.protocol === "file:";
+const inviteUrl = () => location.origin + location.pathname + "?room=" + ROOM;
+const newCode = () => Array.from({length:6}, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
+let qrData = "";
+function makeQr(){
+  if (qrData) return qrData;
+  try {
+    if (typeof QRCode === "undefined") return "";
+    const tmp = document.createElement("div");
+    new QRCode(tmp, { text: inviteUrl(), width: 480, height: 480, colorDark: "#0a0c18", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    const cv = tmp.querySelector("canvas");
+    qrData = cv ? cv.toDataURL("image/png") : "";
+  } catch(e){ qrData = ""; }
+  return qrData;
+}
+function qrImg(){ const src = makeQr(); if (!src) return null; const w = document.createElement("div"); w.className = "qr"; const im = document.createElement("img"); im.src = src; im.alt = "학생 초대 QR 코드"; w.appendChild(im); return w; }
+const TN = ["빨강","파랑","초록","노랑","보라","청록","분홍","갈색","남색","회색"];
+const KO = "사과 바다 하늘 구름 나무 연필 지우개 공책 교실 운동장 친구 선생님 도서관 기차 비행기 자전거 무지개 바람 햇살 별빛 달팽이 고양이 강아지 토끼 호랑이 다람쥐 거북이 코끼리 기린 펭귄 수박 딸기 포도 바나나 복숭아 감자 고구마 옥수수 김밥 떡볶이 라면 만두 피아노 기타 노래 그림 사진 편지 우산 장갑 모자 운동화 가방 시계 안경 컴퓨터 키보드 마우스 모니터 프린터 인터넷 코딩 로봇 우주 지구 태양 행성 은하수 화산 사막 숲속 강물 폭포 계곡 등대 항구 시장 병원 우체국 소방서 경찰서 놀이터 박물관 미술관 축구 야구 농구 배구 탁구 수영 달리기 줄넘기 태권도 가을 단풍 겨울 눈사람 여름 소나기 번개 천둥 해바라기 민들레 장미 튤립 소나무 대나무 바닷가 모래성 조개 갈매기 오징어 고등어 문어 해파리 돌고래 상어 고래 빵집 케이크 초콜릿 사탕 아이스크림 주스 우유 연습 정답 도전 협동 응원 승리 열정 용기 희망 약속 행복 감사 배려 자석 실험 현미경 망원경 지도 나침반 퍼즐 블록 알고리즘 데이터 반복문 변수 함수 센서".split(" ");
+const EN = "apple banana cloud river ocean pencil eraser school friend teacher library train rocket bicycle rainbow window garden flower tiger rabbit turtle dolphin penguin giraffe monkey orange grape lemon cookie bread pizza piano guitar music camera letter umbrella jacket sneaker clock glasses computer keyboard mouse screen robot planet earth moon star desert island forest bridge castle market doctor soccer tennis swim jump winter summer autumn spring snow storm thunder sunflower maple coding puzzle magnet science history number circle square yellow purple silver golden happy brave quick smart kind team power dream light shadow energy travel journey morning evening family village mountain valley harbor captain dragon wizard knight data loop sensor".split(" ");
+const PV_KO = [
+  "가는 말이 고와야 오는 말이 곱다","낮말은 새가 듣고 밤말은 쥐가 듣는다","발 없는 말이 천 리 간다","세 살 버릇 여든까지 간다",
+  "티끌 모아 태산","원숭이도 나무에서 떨어진다","백지장도 맞들면 낫다","소 잃고 외양간 고친다","천 리 길도 한 걸음부터",
+  "아니 땐 굴뚝에 연기 날까","돌다리도 두들겨 보고 건너라","등잔 밑이 어둡다","누워서 떡 먹기","우물 안 개구리","가는 날이 장날",
+  "고래 싸움에 새우 등 터진다","금강산도 식후경","낫 놓고 기역 자도 모른다","믿는 도끼에 발등 찍힌다","바늘 도둑이 소도둑 된다",
+  "벼는 익을수록 고개를 숙인다","빈 수레가 요란하다","사공이 많으면 배가 산으로 간다","서당 개 삼 년이면 풍월을 읊는다","식은 죽 먹기",
+  "윗물이 맑아야 아랫물이 맑다","지렁이도 밟으면 꿈틀한다","콩 심은 데 콩 나고 팥 심은 데 팥 난다","하늘이 무너져도 솟아날 구멍이 있다",
+  "호랑이도 제 말 하면 온다","구슬이 서 말이라도 꿰어야 보배","쇠뿔도 단김에 빼라","열 번 찍어 안 넘어가는 나무 없다","같은 값이면 다홍치마",
+  "개구리 올챙이 적 생각 못 한다","공든 탑이 무너지랴","배보다 배꼽이 더 크다","병 주고 약 준다","꿩 먹고 알 먹는다","하나를 보면 열을 안다"
+];
+const PV_EN = [
+  "practice makes perfect","time is money","better late than never","no pain no gain","look before you leap","slow and steady wins the race",
+  "two heads are better than one","the early bird catches the worm","actions speak louder than words","where there is a will there is a way",
+  "an apple a day keeps the doctor away","every cloud has a silver lining","knowledge is power","easy come easy go","seeing is believing"
+];
+const PV = PV_KO.concat(PV_EN);
+const pool = l => l === "en" ? EN : l === "mix" ? KO.concat(EN) : KO;
+const pvRange = l => l === "en" ? [PV_KO.length, PV.length] : l === "mix" ? [0, PV.length] : [0, PV_KO.length];
+
+// 이름 비속어 차단
+const BADW = ["시발","씨발","씨바","시바","씨빨","ㅅㅂ","ㅆㅂ","병신","븅신","ㅂㅅ","개새","새끼","ㅅㄲ","좆","존나","졸라","ㅈㄴ","지랄","미친","ㅁㅊ","닥쳐","꺼져","썅","엿먹","느금","니미","애미","애비","fuck","shit","bitch","sex"];
+const isBad = s => { const t = String(s).toLowerCase().replace(/[\s\d._\-~!@#$%^&*]/g, ""); return BADW.some(w => t.includes(w)); };
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+  del(k){ try { localStorage.removeItem(k); } catch(e){} }
+};
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const BAD = new RegExp("[" + [[0,31],[127,159],[0x200b,0x200f],[0x2028,0x202e],[0x2060,0x206f],[0xfeff,0xfeff]].map(([a,b]) => "\\u" + a.toString(16).padStart(4,"0") + "-\\u" + b.toString(16).padStart(4,"0")).join("") + "]", "g");
+const clean = (s, n) => String(s ?? "").replace(BAD, "").trim().slice(0, n);
+const norm = s => String(s).replace(/\s+/g, "").toLowerCase();
+const okSid = s => typeof s === "string" && /^[0-9A-Za-z-]{1,10}$/.test(s);
+const okT = t => typeof t === "string" && /^[0-9]$/.test(t);
+const fmt = s => Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+const count = (own, t) => { let c=0; for (const ch of own || "") if (ch===t) c++; return c; };
+const teamIds = n => Array.from({length:n}, (_,i) => String(i));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const enc = new TextEncoder();
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- 연결: 암호화된 WSS 중계 (MQTT). 학생 로그인 없음, 직접 연결(WebRTC) 사용 안 함 ----------
+const BROKERS = ["wss://broker.emqx.io:8084/mqtt", "wss://broker.hivemq.com:8884/mqtt", "wss://test.mosquitto.org:8081/mqtt"];
+const te8 = new TextEncoder(), td8 = new TextDecoder();
+const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+function mqLen(n){ const o = []; do { let b = n % 128; n = Math.floor(n / 128); if (n > 0) b |= 128; o.push(b); } while (n > 0); return o; }
+function mqStr(s){ const b = te8.encode(s); return [b.length >> 8, b.length & 255, ...b]; }
+function mqPkt(h, body){ const l = mqLen(body.length); const out = new Uint8Array(1 + l.length + body.length); out[0] = h; out.set(l, 1); out.set(body, 1 + l.length); return out; }
+
+class MQ {
+  constructor(url, cid, onMsg, onState){ this.url = url; this.cid = cid; this.onMsg = onMsg; this.onState = onState; this.subs = new Set(); this.ok = false; this.closed = false; this.buf = new Uint8Array(0); this.pid = 1; this.backoff = 1500; this.open(); }
+  open(){
+    if (this.closed) return;
+    let ws; try { ws = new WebSocket(this.url, "mqtt"); } catch(e){ this.retry(); return; }
+    this.ws = ws; ws.binaryType = "arraybuffer";
+    ws.onopen = () => { const body = [...mqStr("MQTT"), 4, 2, 0, 30, ...mqStr(this.cid)]; this.raw(mqPkt(0x10, body)); };
+    ws.onmessage = e => this.feed(new Uint8Array(e.data));
+    ws.onclose = () => { if (this.ws !== ws) return; this.setOk(false); clearInterval(this.ping); this.retry(); };
+    ws.onerror = () => {};
+  }
+  retry(){ if (this.closed) return; clearTimeout(this.rt); this.rt = setTimeout(() => this.open(), this.backoff); this.backoff = Math.min(10000, this.backoff * 1.6); }
+  setOk(v){ if (this.ok === v) return; this.ok = v; try { this.onState(v); } catch(e){} }
+  raw(u8){ try { if (this.ws && this.ws.readyState === 1) this.ws.send(u8); } catch(e){} }
+  feed(chunk){
+    const nb = new Uint8Array(this.buf.length + chunk.length); nb.set(this.buf); nb.set(chunk, this.buf.length); this.buf = nb;
+    while (this.buf.length >= 2){
+      let mul = 1, len = 0, i = 1, byte;
+      do { if (i >= this.buf.length) return; byte = this.buf[i++]; len += (byte & 127) * mul; mul *= 128; } while (byte & 128);
+      if (this.buf.length < i + len) return;
+      const type = this.buf[0] >> 4, flags = this.buf[0] & 15, body = this.buf.slice(i, i + len);
+      this.buf = this.buf.slice(i + len);
+      if (type === 2){
+        if (body[1] === 0){ this.backoff = 1500; this.setOk(true); for (const t of this.subs) this.sendSub(t); clearInterval(this.ping); this.ping = setInterval(() => this.raw(new Uint8Array([0xC0, 0])), 20000); }
+        else { try { this.ws.close(); } catch(e){} }
+      } else if (type === 3){
+        const tl = (body[0] << 8) | body[1]; const topic = td8.decode(body.subarray(2, 2 + tl));
+        const off = 2 + tl + (((flags >> 1) & 3) ? 2 : 0);
+        try { this.onMsg(topic, body.slice(off)); } catch(e){ console.error(e); }
+      }
+    }
+  }
+  sendSub(t){ const id = this.pid = (this.pid % 65000) + 1; this.raw(mqPkt(0x82, [id >> 8, id & 255, ...mqStr(t), 0])); }
+  subscribe(t){ this.subs.add(t); if (this.ok) this.sendSub(t); }
+  publish(t, payload){ if (!this.ok) return false; const tb = mqStr(t); const body = new Uint8Array(tb.length + payload.length); body.set(tb); body.set(payload, tb.length); this.raw(mqPkt(0x30, body)); return true; }
+  close(){ this.closed = true; clearTimeout(this.rt); clearInterval(this.ping); this.setOk(false); try { if (this.ws && this.ws.readyState === 1) this.raw(new Uint8Array([0xE0, 0])); this.ws && this.ws.close(); } catch(e){} }
+}
+
+const Shim = (() => {
+  const myId = "tf" + rnd(12);
+  let role = "", code = "", gen = 0, topic = "", key = null, clients = [], cur = 0, curSince = 0;
+  let myPres = {}, mySeq = 0, lastSend = 0, sendTimer = 0, fireT = 0, isConn = false;
+  let hostPres = null, hostSeen = 0, hostSeq = -1, hostSess = "";
+  const failed = !(window.WebSocket && window.crypto && crypto.subtle);
+  const stu = new Map(), ph = [], ch = [];
+  const fire = () => { if (fireT) return; fireT = setTimeout(() => { fireT = 0; const s = peers(); ph.forEach(h => { try { h({ peers:s, joined:[], left:[], updated:[] }); } catch(e){ console.error(e); } }); }, 0); };
+  const anyOk = () => clients.some(c => c.ok);
+  function updConn(){
+    const c = role === "host" ? anyOk() : role === "student" ? (anyOk() && !!hostPres) : false;
+    if (c === isConn) return; isConn = c; ch.forEach(h => { try { h(c); } catch(e){} });
+  }
+  function peers(){
+    const a = [{ peer:"me", by:null, isMe:true, sameTab:true, kind:"viewer", guest:false, presence:myPres, updatedAt:Date.now() }];
+    if (role === "host") for (const [id, v] of stu) a.push({ peer:id, by:null, isMe:false, sameTab:false, kind:"viewer", guest:false, presence:v.p, updatedAt:v.t });
+    if (role === "student" && hostPres) a.push({ peer:"host", by:null, isMe:false, sameTab:false, kind:"viewer", guest:false, presence:hostPres, updatedAt:hostSeen });
+    return a;
+  }
+  async function derive(c){
+    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", te8.encode("tflip-topic:" + c)));
+    const t = "tflip3/" + Array.from(h.slice(0, 10), b => b.toString(16).padStart(2, "0")).join("");
+    const k = await crypto.subtle.digest("SHA-256", te8.encode("tflip-key:" + c));
+    return { t, k: await crypto.subtle.importKey("raw", k, "AES-GCM", false, ["encrypt", "decrypt"]) };
+  }
+  async function seal(obj){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, te8.encode(JSON.stringify(obj))));
+    const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12); return out;
+  }
+  async function unseal(u8, k){
+    try { const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv:u8.slice(0, 12) }, k, u8.slice(12)); return JSON.parse(td8.decode(pt)); } catch(e){ return null; }
+  }
+  function sendNow(extra){
+    lastSend = Date.now();
+    if (!key || !role) return;
+    const msg = role === "host" ? { h:myPres, s:++mySeq, k:myId } : { i:myId, p:myPres, s:++mySeq, ...(extra || {}) };
+    const g = gen, k = key, t = topic + (role === "host" ? "/d" : "/u");
+    seal(msg).then(b => { if (g !== gen || k !== key) return; for (const c of clients) c.publish(t, b); });
+  }
+  function queueSend(){
+    if (sendTimer) return;
+    const wait = Math.max(0, 140 - (Date.now() - lastSend));
+    sendTimer = setTimeout(() => { sendTimer = 0; sendNow(); }, wait);
+  }
+  function presence(patch){
+    const n = { ...myPres }; for (const k in patch){ if (patch[k] === null) delete n[k]; else n[k] = patch[k]; } myPres = n;
+    queueSend(); fire(); return Promise.resolve();
+  }
+  function onMsg(t, u8){
+    const g = gen, k = key;
+    unseal(u8, k).then(m => {
+      if (!m || g !== gen) return;
+      const now = Date.now();
+      if (role === "host" && t === topic + "/u" && typeof m.i === "string" && m.i.length < 40){
+        const prev = stu.get(m.i);
+        if (m.bye){ if (stu.delete(m.i)) fire(); return; }
+        if (!m.p || typeof m.p !== "object" || Array.isArray(m.p)) return;
+        if (prev && typeof m.s === "number" && m.s < prev.s) return;
+        stu.set(m.i, { p:m.p, t:now, s:m.s|0 });
+        if (!prev) queueSend();
+        fire();
+      } else if (role === "student" && t === topic + "/d" && "h" in m){
+        if (m.k === hostSess && typeof m.s === "number" && m.s < hostSeq) return;
+        hostSess = m.k; hostSeq = m.s|0; hostSeen = now;
+        hostPres = m.h && typeof m.h === "object" ? m.h : null;
+        updConn(); fire();
+      }
+    });
+  }
+  function makeClient(url){ const c = new MQ(url, myId, onMsg, () => { updConn(); if (c.ok && role === "student") sendNow(); if (c.ok && role === "host") queueSend(); }); return c; }
+  function teardown(){
+    if (key && role === "student" && myPres.role) sendNow({ bye:1 });
+    if (key && role === "host"){ myPres = {}; sendNow(); }
+    const old = clients; clients = []; setTimeout(() => old.forEach(c => c.close()), 300);
+    stu.clear(); hostPres = null; hostSeq = -1; hostSess = ""; key = null; topic = "";
+    clearTimeout(sendTimer); sendTimer = 0;
+    updConn();
+  }
+  async function start(r, c){
+    if (failed){ ch.forEach(h => { try { h(false); } catch(e){} }); return; }
+    if (role === r && code === c && key) return;
+    teardown(); const g = ++gen; role = r; code = c;
+    const d = await derive(c); if (g !== gen) return;
+    topic = d.t; key = d.k;
+    if (r === "host"){ clients = BROKERS.map(makeClient); clients.forEach(x => x.subscribe(topic + "/u")); }
+    else { cur = 0; curSince = Date.now(); clients = [makeClient(BROKERS[cur])]; clients[0].subscribe(topic + "/d"); }
+    fire(); updConn();
+  }
+  setInterval(() => {
+    const now = Date.now();
+    if (role === "host"){
+      let ch2 = false; for (const [id, v] of stu) if (now - v.t > 12000){ stu.delete(id); ch2 = true; }
+      if (ch2) fire();
+      if (now - lastSend > 2500) sendNow();
+    } else if (role === "student" && key){
+      if (hostPres && now - hostSeen > 9000){ hostPres = null; updConn(); fire(); }
+      if (now - lastSend > 3500) sendNow();
+      const heard = hostSeen > curSince;
+      if (!heard && now - curSince > 9000 && BROKERS.length > 1){
+        clients.forEach(x => x.close());
+        cur = (cur + 1) % BROKERS.length; curSince = now;
+        clients = [makeClient(BROKERS[cur])]; clients[0].subscribe(topic + "/d");
+      }
+    }
+  }, 1000);
+  addEventListener("pagehide", () => { if (role === "student" && myPres.role && key) sendNow({ bye:1 }); });
+  return { presence, peers,
+    hostRoom:c => start("host", c), joinRoom:c => start("student", c),
+    leave(){ teardown(); gen++; role = ""; code = ""; myPres = {}; fire(); },
+    onPeers(h){ ph.push(h); fire(); return () => {}; },
+    onConnection(h){ ch.push(h); setTimeout(() => h(isConn), 0); return () => {}; },
+    connected:() => isConn, failed:() => failed, code:() => code, role:() => role,
+    brokers:() => clients.filter(c => c.ok).length };
+})();
+
+let room = null, canEdit = false, connected = false, joinWarnUntil = 0;
+let mode = "join";
+let me = store.get("tf-me") || { sid:"", nm:"" };
+let G = null, H = null;
+let myN = 0, myClaims = [];
+let lastN = new Map();
+let prevWordsShown = [];
+let prevOwn = "", prevK = 0, bag = [], seenEk = -1, wasFever = false;
+let combo = 0, lastHitAt = 0;
+
+// ---------- sound ----------
+let ac = null, soundOn = store.get("tf-snd") !== false;
+function ensureAudio(){ if (!soundOn) return; try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch(e){ ac = null; } }
+function tone(f, d = .09, type = "square", v = .05, to = 0, delay = 0){
+  if (!soundOn || !ac) return;
+  try {
+    const t0 = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + d);
+    g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+    o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + d + .02);
+  } catch(e){}
+}
+const SFX = {
+  hit(){ tone(660,.07); tone(990,.07,"square",.04,0,.06); },
+  miss(){ tone(150,.14,"sawtooth",.04); },
+  missile(){ tone(900,.6,"sawtooth",.035,120); tone(80,.3,"square",.06,40,.6); },
+  ink(){ tone(220,.35,"triangle",.06,60); },
+  proverb(){ [523,659,784,1046].forEach((f,i) => tone(f,.12,"square",.045,0,i*.09)); },
+  chance(){ tone(880,.1,"triangle",.05); tone(1175,.16,"triangle",.05,0,.1); },
+  fever(){ [440,554,659,880].forEach((f,i) => tone(f,.1,"square",.04,0,i*.07)); },
+  tick(){ tone(1200,.04,"square",.025); },
+  end(){ [784,659,523].forEach((f,i) => tone(f,.18,"triangle",.05,0,i*.16)); }
+};
+function renderSnd(){ $("btnSnd").setAttribute("aria-pressed", soundOn); $("btnSnd").textContent = soundOn ? "소리 켬" : "소리 끔"; }
+
+// ---------- options ----------
+for (let i=2;i<=MAXP;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i+"명"; $("selMax").appendChild(o); }
+for (let i=2;i<=MAXT;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i+"팀"; $("selTeams").appendChild(o); }
+$("selMax").value = "30"; $("selTeams").value = "2";
+
+// ---------- demo board ----------
+function demoState(){
+  const w = shuffle(KO).slice(0, N);
+  let own = ""; for (let i=0;i<N;i++) own += String((i + Math.floor(i/6)) % 2);
+  const it = ".".repeat(N).split(""); it[7] = "m"; it[22] = "i";
+  return { ph:"demo", n:30, dur:120, left:120, nt:2, mx:30, act:"01", words:w, own, it:it.join(""), ro:[], x:[], fx:[], ev:[], ek:0, bp:[0,0], pv:null, fv:false, k:0 };
+}
+G = demoState();
+
+// ---------- wire format ----------
+function encode(S){
+  const now = Date.now();
+  return { v:V, ph:S.ph, n:S.n || 30, dur:S.dur, left:S.left, nt:S.nt, mx:S.mx, act:S.act, words:S.words, own:S.own, it:S.it,
+    ro:S.ro.map(e => [e.id, e.n, e.t, e.s, e.on]), x:S.x.slice(0,12), fx:S.fx, ev:S.ev, ek:S.ek, bp:S.bp,
+    pv:S.pv ? [S.pv.i, Math.max(0, Math.ceil((S.pv.end - now)/1000))] : null, fv:!!S.fv, k:S.k };
+}
+function decode(g){
+  if (!g || g.v !== V || !Array.isArray(g.words) || !Array.isArray(g.ro)) return null;
+  const nt = Math.min(MAXT, Math.max(2, g.nt|0));
+  const pv = Array.isArray(g.pv) && Number.isInteger(g.pv[0]) && PV[g.pv[0]] ? { i:g.pv[0], left:g.pv[1]|0 } : null;
+  return { ph:String(g.ph), n:SIZES.includes(g.n) ? g.n : 30, dur:g.dur|0, left:g.left|0, nt, mx:g.mx|0, act:typeof g.act === "string" ? g.act : "",
+    words:g.words.map(w => clean(w, 20)), own:typeof g.own === "string" ? g.own : "", it:typeof g.it === "string" ? g.it : "",
+    ro:g.ro.filter(a => Array.isArray(a) && okT(a[2])).map(a => ({ id:clean(a[0],10), n:clean(a[1],10), t:a[2], s:a[3]|0, on:a[4]?1:0 })),
+    x:Array.isArray(g.x) ? g.x : [], fx:Array.isArray(g.fx) ? g.fx : [], ev:Array.isArray(g.ev) ? g.ev : [], ek:g.ek|0,
+    bp:Array.isArray(g.bp) ? g.bp.map(n => n|0) : [], pv, fv:!!g.fv, k:g.k|0 };
+}
+const pvText = () => G.pv ? PV[G.pv.i] : "";
+const pvLeft = () => !G.pv ? 0 : (G === H && H.pv ? Math.max(0, Math.ceil((H.pv.end - Date.now())/1000)) : G.pv.left);
+const teamScore = t => count(G.own, t) * 10 + ((G.bp || [])[+t] || 0);
+
+// ---------- board ----------
+const cards = [];
+let prevWords = [], goneUntil = [];
+function ensureCards(n){
+  if (cards.length === n) return;
+  const b = $("board"); b.textContent = ""; cards.length = 0;
+  for (let i=0;i<n;i++){ const d=document.createElement("div"); d.className="card n"; b.appendChild(d); cards.push(d); }
+  b.dataset.n = n; N = n; prevOwn = ""; prevWords = []; goneUntil = [];
+}
+ensureCards(30);
+const myEntry = () => mode === "player" ? (G.ro||[]).find(x => x.id === me.sid) : null;
+
+function floatAt(i, txt){
+  const c = cards[i]; if (!c) return;
+  const f = document.createElement("span"); f.className = "float"; f.textContent = txt;
+  f.style.left = (c.offsetLeft + c.offsetWidth/2 - 20) + "px"; f.style.top = (c.offsetTop) + "px";
+  $("board").parentElement.appendChild(f); setTimeout(() => f.remove(), 950);
+}
+
+function renderBoard(){
+  const own = G.own || "", words = G.words || [], it = G.it || "";
+  const mine = myEntry();
+  const typed = mode === "player" ? $("typeIn").value.trim() : "";
+  const hideWords = G.ph === "lobby" || G.ph === "ready";
+  ensureCards(G.n || 30);
+  const fresh = (G.fx || []).filter(f => f[3] > prevK);
+  const now = Date.now();
+  let wake = 0;
+  for (let i=0;i<N;i++){
+    const c = cards[i], o = own[i];
+    if (!hideWords && G.ph !== "demo" && prevWords[i] && words[i] && prevWords[i] !== words[i] && !reduceMotion) goneUntil[i] = now + GONE_MS;
+    const gone = (goneUntil[i] || 0) > now;
+    const spawning = !gone && (goneUntil[i] || 0) + 320 > now;
+    if (gone) wake = Math.max(wake, goneUntil[i] - now);
+    if (spawning) wake = Math.max(wake, goneUntil[i] + 330 - now);
+    const w = hideWords ? "" : (words[i] || "");
+    c.className = "card " + (hideWords || !okT(o) ? "n" : "t" + o) + (gone ? " gone" : spawning ? " spawn" : "");
+    c.textContent = gone ? (prevWordsShown[i] || "") : w;
+    if (!gone) prevWordsShown[i] = w;
+    if (gone) continue;
+    const item = hideWords ? "" : it[i];
+    if (item === "m" || item === "i"){ const b = document.createElement("span"); b.className = "badge " + item; b.textContent = item === "m" ? "미사일" : "먹물"; c.appendChild(b); }
+    if (typed && w && mine && o !== mine.t && G.ph === "play" && w.startsWith(typed)) c.classList.add("hint");
+    if (prevOwn && prevOwn[i] && own[i] && prevOwn[i] !== own[i] && !hideWords && !spawning){ void c.offsetWidth; c.classList.add("flip"); }
+  }
+  prevWords = words.slice();
+  if (wake){ clearTimeout(renderBoard.t); renderBoard.t = setTimeout(renderBoard, wake + 10); }
+  for (const f of fresh){
+    if (mode === "player" && f[2] === me.sid && cards[f[0]]){
+      cards[f[0]].classList.add("mine"); floatAt(f[0], "+" + (f[4] || 10));
+      const now = Date.now(); combo = now - lastHitAt < 3500 ? combo + 1 : 1; lastHitAt = now;
+      const cb = $("comboBox"); cb.classList.remove("hot"); void cb.offsetWidth; if (combo >= 3) cb.classList.add("hot");
+      SFX.hit();
+    }
+  }
+  $("board").classList.toggle("fever", G.ph === "play" && G.fv);
+  prevOwn = own; prevK = G.k || 0;
+}
+
+// ---------- header / proverb / overlay / roster ----------
+function shownTeams(){
+  if ((G.ph === "play" || G.ph === "end" || G.ph === "demo") && G.act) return G.act.split("");
+  return teamIds(G.nt || 2);
+}
+
+function renderTop(){
+  const left = G.ph === "play" ? G.left : G.ph === "end" ? 0 : (G.dur || 120);
+  $("timer").textContent = fmt(Math.max(0,left|0));
+  $("timer").classList.toggle("low", G.ph === "play" && left <= 10);
+  $("timer").classList.toggle("fever", G.ph === "play" && G.fv);
+  $("phase").textContent = ({demo:"미리보기", lobby:"대기실", ready:"곧 시작", play: G.fv ? "피버 타임" : "게임 중", end:"게임 종료"})[G.ph] || "";
+  const box = $("scores"); box.textContent = "";
+  const byPts = G.ph === "play" || G.ph === "end" || G.ph === "demo";
+  const ts = shownTeams();
+  const vals = ts.map(t => byPts ? teamScore(t) : (G.ro||[]).filter(e => e.t === t).length);
+  const top = Math.max(...vals);
+  const mine = myEntry();
+  ts.forEach((t, i) => {
+    const d = document.createElement("div"); d.className = "chip t" + t; d.dataset.t = t;
+    if (byPts && G.ph !== "demo" && vals[i] === top && top > 0) d.classList.add("lead");
+    if (mine && mine.t === t) d.classList.add("mine");
+    const a = document.createElement("span"); a.className = "nm"; a.textContent = TN[+t];
+    const b = document.createElement("span"); b.className = "n"; b.textContent = vals[i];
+    const u = document.createElement("span"); u.className = "u"; u.textContent = byPts ? `점 · 카드 ${count(G.own, t)}` : "명";
+    d.append(a, b, u); box.appendChild(d);
+  });
+}
+
+function renderPv(){
+  const bar = $("pvBar");
+  const show = G.pv && (G.ph === "play" || G.ph === "demo");
+  bar.hidden = !show;
+  if (!show) return;
+  $("pvTxt").textContent = pvText();
+  const l = pvLeft();
+  $("pvSec").textContent = G.ph === "demo" ? "" : l + "초";
+  $("pvMeter").style.width = (G.ph === "demo" ? 100 : Math.min(100, l / 15 * 100)) + "%";
+  bar.classList.toggle("typing", mode === "player" && pvTyping($("typeIn").value));
+}
+
+function renderOverlay(){
+  const box = $("ovBox"); box.textContent = "";
+  const add = (tag, cls, txt, parent = box) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; parent.appendChild(e); return e; };
+  const rules = () => {
+    const r = add("div", "rules");
+    [["단어 뒤집기", "다른 팀 색 카드의 단어를 치면 우리 팀 카드가 됩니다. +10점"],
+     ["속담 찬스", "금색 속담을 먼저 완성하면 +100점, 상대 카드 3장을 뒤집습니다."],
+     ["미사일", "미사일 카드를 뒤집으면 1등 팀 카드 3장을 빼앗습니다."],
+     ["먹물", "먹물 카드를 뒤집으면 다른 팀 화면에 먹물이 뿌려집니다. 문질러 닦으세요."],
+     ["피버 타임", "마지막 10초는 모든 점수가 2배입니다."]]
+      .forEach(([b, s]) => { const d = add("div", "", null, r); add("b", "", b, d); d.appendChild(document.createTextNode(s)); });
+  };
+  let show = true;
+  if (G.ph === "demo"){
+    if (findHost()) show = false;
+    else { add("h2", "", "진행자 화면을 기다리는 중"); add("p", "", "선생님이 진행자 화면을 열면 게임판이 열립니다. 오른쪽에 학번과 이름을 미리 입력해 두세요."); rules(); }
+  } else if (G.ph === "lobby"){
+    add("h2", "", `대기실 · ${(G.ro||[]).length} / ${G.mx}명 · ${G.nt}팀`);
+    if (mode === "host"){
+      add("p", "", "QR 코드를 찍거나 아래 주소로 들어와 학번과 이름을 입력하세요. 로그인은 필요 없습니다.");
+      add("div", "code", "방 코드 " + ROOM);
+      if (!isFile){ const q = qrImg(); if (q) box.appendChild(q); add("div", "ovurl", inviteUrl()); }
+      else add("p", "", "지금은 컴퓨터 파일로 열려 있어 학생이 접속할 수 없습니다. 이 파일을 웹사이트에 올린 뒤 그 주소로 여세요.");
+    } else {
+      add("p", "", "학번과 이름을 입력하면 무작위로 팀에 배정됩니다.");
+      rules();
+    }
+  } else if (G.ph === "ready"){
+    add("div", "big", String(Math.max(1, G.left|0))); add("p", "", "입력창에 손을 올리세요");
+  } else if (G.ph === "end"){
+    const ts = shownTeams().map(t => ({ t, c:teamScore(t), k:count(G.own, t) })).sort((a,b) => b.c - a.c);
+    const winners = ts.filter(x => x.c === ts[0].c);
+    add("h2", "", winners.length > 1 ? "공동 1위 · " + winners.map(w => TN[+w.t]).join(", ") : TN[+winners[0].t] + " 팀 승리");
+    const rk = add("div", "rank");
+    ts.forEach(x => {
+      const d = add("div", "chip t" + x.t + (x.c === ts[0].c ? " lead" : ""), null, rk);
+      add("span", "u", (ts.findIndex(y => y.c === x.c) + 1) + "위", d);
+      add("span", "nm", TN[+x.t], d);
+      add("span", "n", String(x.c), d);
+      add("span", "u", `점 · 카드 ${x.k}`, d);
+    });
+    const best = (G.ro||[]).filter(e => e.s > 0).sort((a,b) => b.s - a.s).slice(0,3);
+    if (best.length){
+      const m = add("div", "mvp");
+      best.forEach((e, i) => add("span", "", `${i+1}위 ${e.n} (${TN[+e.t]}) ${e.s}점`, m));
+    }
+  } else show = false;
+  $("overlay").hidden = !show;
+}
+
+function renderRoster(){
+  const ro = G.ro || [];
+  const box = $("teams"); box.textContent = "";
+  const hostEdit = mode === "host" && H && H.ph !== "play" && H.ph !== "ready";
+  for (const t of teamIds(G.nt || 2)){
+    const list = ro.filter(e => e.t === t);
+    const wrap = document.createElement("div"); wrap.className = "team t" + t;
+    const h = document.createElement("h4");
+    const a = document.createElement("span"); a.textContent = TN[+t] + " 팀";
+    const c = document.createElement("span"); c.className = "c"; c.textContent = list.length + "명";
+    h.append(a, c); wrap.appendChild(h);
+    const ul = document.createElement("ul");
+    for (const e of list){
+      const li = document.createElement("li");
+      if (!e.on) li.classList.add("off");
+      const w = document.createElement("span"); w.className = "who"; w.textContent = `${e.id} ${e.n}`; li.appendChild(w);
+      if (hostEdit){
+        const sel = document.createElement("select"); sel.setAttribute("aria-label", `${e.n} 팀 변경`);
+        for (const o of teamIds(H.nt)){ const op = document.createElement("option"); op.value = o; op.textContent = TN[+o]; sel.appendChild(op); }
+        sel.value = e.t; sel.onchange = () => hostMove(e.id, sel.value);
+        li.appendChild(sel);
+      } else { const s = document.createElement("span"); s.className = "s"; s.textContent = e.s; li.appendChild(s); }
+      ul.appendChild(li);
+    }
+    if (!list.length){ const li = document.createElement("li"); li.className = "empty"; li.textContent = "아직 없음"; ul.appendChild(li); }
+    wrap.appendChild(ul); box.appendChild(wrap);
+  }
+  $("rosterCnt").textContent = `${ro.length} / ${G.mx || MAXP}`;
+}
+
+function renderPanels(){
+  document.body.classList.toggle("as-player", mode === "player");
+  $("pJoin").hidden = mode !== "join";
+  $("pPlayer").hidden = mode !== "player";
+  $("pHost").hidden = mode !== "host";
+  $("pTeacher").hidden = !!URL_ROOM || mode !== "join";
+  $("codeField").hidden = !!URL_ROOM;
+
+  if (mode === "join"){
+    const jm = $("joinMsg");
+    if (Date.now() > joinWarnUntil){
+      jm.classList.remove("warn");
+      if (Shim.failed()){ jm.textContent = "이 브라우저에서는 연결할 수 없습니다. 크롬이나 엣지 최신 버전으로 https 주소를 열어 주세요."; jm.classList.add("warn"); }
+      else if (Shim.role() !== "student") jm.textContent = URL_ROOM ? "게임방에 연결하는 중입니다." : "학번, 이름, 방 코드를 입력하고 참가하기를 누르세요.";
+      else if (!connected) jm.textContent = "게임방에 연결하는 중입니다. 선생님 화면이 열려 있는지 확인하세요.";
+      else if (!findHost()) jm.textContent = "선생님 화면을 기다리는 중입니다.";
+      else jm.textContent = "게임방에 연결되었습니다.";
+    }
+    $("btnJoin").disabled = !room;
+  }
+
+  if (mode === "player"){
+    const e = myEntry();
+    const cls = e ? "t" + e.t : "";
+    $("meBox").className = "me " + cls;
+    $("myName").textContent = `${me.sid} ${me.nm}`;
+    $("myInfo").textContent = e ? `${TN[+e.t]} 팀` : "팀 배정 대기";
+    $("myScore").textContent = e ? e.s : 0;
+    if (Date.now() - lastHitAt > 3500) combo = 0;
+    $("myCombo").textContent = combo;
+    const pm = $("pMsg"); pm.classList.remove("warn");
+    if (!findHost()) pm.textContent = "진행자 화면과 연결이 끊겼습니다. 진행자 화면이 다시 열리면 자동으로 이어집니다.";
+    else if (!e && (G.x||[]).includes(me.sid)){ pm.textContent = `정원(${G.mx}명)이 가득 찼습니다. 자리가 나면 자동으로 입장합니다.`; pm.classList.add("warn"); }
+    else if (!e) pm.textContent = "입장 확인 중입니다.";
+    else if (G.ph === "lobby") pm.textContent = "입장 완료. 진행자가 시작하면 게임판이 열립니다.";
+    else if (G.ph === "play") pm.textContent = "";
+    else if (G.ph === "end") pm.textContent = "게임이 끝났습니다. 다음 판을 기다려 주세요.";
+    else pm.textContent = "";
+    pm.hidden = !pm.textContent;
+    $("btnLeave").hidden = G.ph === "play" || G.ph === "ready";
+    const tb = $("typebar"); tb.hidden = false; tb.className = "typebar " + cls;
+    const playable = G.ph === "play" && !!e;
+    $("typeIn").disabled = !playable;
+    $("typeIn").placeholder = playable ? "단어 입력 후 Enter" : "게임이 시작되면 입력할 수 있습니다";
+  } else $("typebar").hidden = true;
+
+  if (mode === "host"){
+    if (!$("qrSmall").firstChild && !isFile){ const src = makeQr(); if (src){ const im = document.createElement("img"); im.src = src; im.alt = "학생 초대 QR 코드"; $("qrSmall").appendChild(im); } else $("qrSmall").hidden = true; }
+    $("lnkPlayer").href = inviteUrl(); $("lnkPlayer").hidden = isFile;
+    $("netInfo").textContent = `방 코드 ${ROOM} · 중계 서버 ${Shim.brokers()}/${BROKERS.length}개 연결됨 · 접속 학생 ${(H.ro||[]).filter(e => e.on).length}명`;
+    $("inviteUrl").textContent = isFile ? `방 코드 ${ROOM} · 지금은 파일로 열려 있어 학생이 접속할 수 없습니다. 웹사이트에 올린 주소로 여세요.` : inviteUrl();
+    const idle = H.ph === "lobby" || H.ph === "end";
+    $("btnStart").disabled = !idle;
+    $("btnLobby").disabled = H.ph === "lobby";
+    for (const id of ["selDur","selLang","selMax","selTeams","btnShuffle"]) $(id).disabled = !idle;
+  }
+}
+
+function render(){ renderTop(); renderPv(); renderBoard(); renderOverlay(); renderRoster(); renderPanels(); processEvents(); }
+
+// ---------- live effects ----------
+function toast(txt, t){
+  const d = document.createElement("div");
+  d.className = "toast" + (okT(t) ? " t" + t : " gold");
+  d.textContent = txt;
+  const feed = $("feed"); feed.appendChild(d);
+  while (feed.children.length > 3) feed.firstChild.remove();
+  setTimeout(() => d.remove(), 2500);
+}
+const nameOf = sid => { const e = (G.ro||[]).find(r => r.id === sid); return e ? e.n : "누군가"; };
+
+function boomAt(idxs){ for (const i of idxs || []){ const c = cards[i]; if (c){ c.classList.remove("boom"); void c.offsetWidth; c.classList.add("boom"); } } }
+
+function missileFly(fromTeam, idxs){
+  const chip = document.querySelector(`#scores .chip[data-t="${fromTeam}"]`) || $("timer");
+  const r0 = chip.getBoundingClientRect();
+  const x0 = r0.left + r0.width/2, y0 = r0.top + r0.height/2;
+  const col = getComputedStyle(document.documentElement).getPropertyValue("--t" + fromTeam).trim() || "#ffc83d";
+  (idxs || []).forEach((i, n) => {
+    const c = cards[i]; if (!c) return;
+    const r1 = c.getBoundingClientRect(); const x1 = r1.left + r1.width/2, y1 = r1.top + r1.height/2;
+    if (reduceMotion){ setTimeout(() => boomAt([i]), 200); return; }
+    const m = document.createElement("div"); m.className = "missile";
+    m.innerHTML = `<svg viewBox="0 0 44 18" width="44" height="18"><path d="M2 9 L10 3 L10 15 Z" fill="#ffc83d"/><rect x="9" y="5" width="24" height="8" rx="3" fill="${col}"/><path d="M33 4 L43 9 L33 14 Z" fill="#f1f3ff"/><path d="M12 5 L8 0 L16 5 Z M12 13 L8 18 L16 13 Z" fill="${col}"/></svg>`;
+    document.body.appendChild(m);
+    const ang = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI;
+    const mx = (x0 + x1)/2, my = Math.min(y0, y1) - 80;
+    const a = m.animate([
+      { transform:`translate(${x0-22}px,${y0-9}px) rotate(${ang-40}deg)` },
+      { transform:`translate(${mx-22}px,${my-9}px) rotate(${ang}deg)`, offset:.5 },
+      { transform:`translate(${x1-22}px,${y1-9}px) rotate(${ang+30}deg)` }
+    ], { duration:750, delay:n*140, easing:"ease-in", fill:"both" });
+    a.onfinish = () => { m.remove(); boomAt([i]); };
+  });
+}
+
+let inkCtx = null, wiping = false;
+function inkSplash(){
+  const cv = $("ink"); const r = cv.getBoundingClientRect(); const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr); inkCtx = ctx;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--blot").trim() || "#04050b";
+  for (let b=0; b<9; b++){
+    const cx = Math.random()*r.width, cy = Math.random()*r.height, R = 40 + Math.random()*Math.min(110, r.width/6);
+    ctx.globalAlpha = .93;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+    for (let s=0; s<10; s++){
+      const a = Math.random()*Math.PI*2, d = R*(.8 + Math.random()*.9), rr = 4 + Math.random()*R*.28;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a)*d, cy + Math.sin(a)*d, rr, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillRect(cx - 5, cy, 10, R * (1 + Math.random()));
+  }
+  ctx.globalAlpha = 1;
+  cv.classList.remove("fade"); cv.classList.add("on");
+  clearTimeout(inkSplash.t1); clearTimeout(inkSplash.t2);
+  inkSplash.t1 = setTimeout(() => cv.classList.add("fade"), 4000);
+  inkSplash.t2 = setTimeout(() => cv.classList.remove("on","fade"), 6300);
+}
+function wipe(ev){
+  if (!inkCtx || !$("ink").classList.contains("on")) return;
+  const r = $("ink").getBoundingClientRect();
+  inkCtx.globalCompositeOperation = "destination-out";
+  inkCtx.beginPath(); inkCtx.arc(ev.clientX - r.left, ev.clientY - r.top, 34, 0, Math.PI*2); inkCtx.fill();
+}
+$("ink").addEventListener("pointerdown", e => { wiping = true; wipe(e); });
+$("ink").addEventListener("pointermove", e => { if (wiping || e.pointerType === "mouse") wipe(e); });
+addEventListener("pointerup", () => { wiping = false; });
+
+function runEv(e){
+  const [, type, t, sid, idxs, target] = e;
+  const mine = myEntry();
+  if (type === "ink"){
+    toast(`${TN[+t] || ""} 팀 먹물 공격!`, t); SFX.ink();
+    document.querySelectorAll("#scores .chip").forEach(c => { if (c.dataset.t !== t){ c.classList.remove("hit"); void c.offsetWidth; c.classList.add("hit"); } });
+    if (mode === "player" && mine && mine.t !== t) inkSplash();
+  } else if (type === "mis"){
+    toast(`${TN[+t] || ""} 팀 미사일 발사 → ${TN[+target] || ""} 팀`, t); SFX.missile();
+    missileFly(t, idxs);
+  } else if (type === "pv"){
+    toast(`속담 성공! ${nameOf(sid)} +100`, "g"); SFX.proverb();
+    setTimeout(() => boomAt(idxs), 150);
+  } else if (type === "pvon"){
+    toast("속담 찬스! 먼저 완성하면 +100", "g"); SFX.chance();
+  } else if (type === "fv"){
+    toast("피버 타임! 점수 2배", "g"); SFX.fever();
+  } else if (type === "end"){
+    SFX.end();
+  }
+}
+function processEvents(){
+  const ek = G.ek || 0;
+  if (seenEk < 0 || ek < seenEk){ seenEk = ek; return; }
+  for (const e of G.ev || []){
+    if (!Array.isArray(e) || typeof e[0] !== "number" || e[0] <= seenEk) continue;
+    seenEk = e[0]; runEv(e);
+  }
+}
+
+// ---------- room helpers ----------
+function findHost(){
+  if (!room) return null;
+  let best = null;
+  for (const p of room.peers()){
+    const pr = p.presence;
+    if (pr && pr.role === "host" && pr.g && pr.g.v === V && !(p.isMe && p.sameTab && mode !== "host")){
+      if (!best || (pr.since||0) < (best.presence.since||0)) best = p;
+    }
+  }
+  return best;
+}
+
+function onRoom(){
+  if (mode === "host"){ hostSync(); return; }
+  const h = findHost();
+  const g = h ? decode(h.presence.g) : null;
+  if (g){
+    if (G.ph !== "play" && g.ph === "play") combo = 0;
+    if (G.ph === "ready" && g.ph === "ready" && g.left !== G.left) SFX.tick();
+    G = g;
+  }
+  else if (G.ph !== "demo"){ G = demoState(); prevOwn = ""; }
+  render();
+}
+
+// ---------- player ----------
+function setPresence(p){ if (room) room.presence(p).catch(()=>{}); }
+
+function join(ev){
+  ev.preventDefault();
+  ensureAudio();
+  const sid = clean($("inSid").value, 10), nm = clean($("inName").value, 10);
+  const jm = $("joinMsg");
+  const warn = t => { jm.textContent = t; jm.classList.add("warn"); joinWarnUntil = Date.now() + 4000; };
+  if (!okSid(sid)){ warn("학번은 숫자나 영문 10자 이내로 입력하세요."); $("inSid").focus(); return; }
+  if (!nm){ warn("이름을 입력하세요."); $("inName").focus(); return; }
+  if (isBad(nm)){ warn("이름에 쓸 수 없는 말이 들어 있습니다. 본인 이름을 입력하세요."); $("inName").focus(); return; }
+  const code = (URL_ROOM || $("inCode").value).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  if (code.length < 4){ warn("선생님이 알려 준 방 코드를 입력하세요."); $("inCode").focus(); return; }
+  ROOM = code;
+  if (Shim.role() !== "student" || Shim.code() !== code) Shim.joinRoom(code);
+  jm.classList.remove("warn"); joinWarnUntil = 0;
+  me = { sid, nm }; store.set("tf-me", me);
+  mode = "player"; myClaims = [];
+  setPresence({ role:"p", sid, nm, cl:[] });
+  onRoom();
+}
+
+function leave(){
+  setPresence({ role:null, sid:null, nm:null, cl:null });
+  mode = "join"; $("typeIn").value = ""; onRoom();
+}
+
+function pvTyping(v){
+  const p = pvText(); if (!p || G.ph !== "play") return false;
+  const a = norm(v); return a.length > 0 && norm(p).startsWith(a);
+}
+
+let pendingSubmit = false, fbTimer = 0;
+function feedback(txt, cls){
+  const fb = $("fb"); fb.textContent = txt; fb.className = "fb " + cls;
+  clearTimeout(fbTimer); fbTimer = setTimeout(() => { fb.textContent = ""; }, 1400);
+}
+function claim(c){ myN++; myClaims = myClaims.concat([[c[0], c[1], myN]]).slice(-6); setPresence({ cl: myClaims }); }
+function submitWord(){
+  const inp = $("typeIn"); const w = inp.value.trim();
+  if (!w || G.ph !== "play") return;
+  const e = myEntry(); if (!e) return;
+  const p = pvText();
+  if (p && norm(w) === norm(p)){ claim([-1, w]); inp.value = ""; feedback("속담 도전!", "gold"); renderPv(); return; }
+  const i = (G.words||[]).indexOf(w);
+  if (i < 0){
+    if (pvTyping(w)) { feedback("속담을 끝까지", "gold"); return; }
+    feedback("없는 단어", "no"); SFX.miss(); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); return;
+  }
+  if (G.own[i] === e.t){ feedback("이미 우리 팀", "no"); inp.value = ""; renderBoard(); return; }
+  claim([i, w]);
+  inp.value = ""; feedback("뒤집기!", "ok"); renderBoard(); renderPv();
+}
+
+// ---------- host ----------
+function hostPublish(){
+  const g = encode(H);
+  if (enc.encode(JSON.stringify(g)).length > 3700){ g.fx = g.fx.slice(-2); g.x = []; g.ev = g.ev.slice(-2); }
+  setPresence({ role:"host", since:H.since, g });
+  H.savedAt = Date.now(); store.set("tf-host", H);
+  G = H; render();
+}
+
+function drawWord(exclude){
+  for (let tries=0; tries<400; tries++){
+    if (!bag.length) bag = shuffle(pool(H.lang));
+    const w = bag.pop();
+    if (!exclude.includes(w)) return w;
+  }
+  return pick(pool(H.lang));
+}
+function pushEv(type, t = "", sid = "", idxs = [], target = ""){
+  H.ek++; H.ev = H.ev.concat([[H.ek, type, t, sid, idxs, target]]).slice(-5);
+}
+function setOwn(i, t){ H.own = H.own.slice(0,i) + t + H.own.slice(i+1); }
+function setIt(i, c){ H.it = H.it.slice(0,i) + c + H.it.slice(i+1); }
+function replaceCard(i){ H.words[i] = drawWord(H.words); setIt(i, "."); }
+function stealCards(fromTeams, toTeam, n){
+  const idx = shuffle([...H.own].map((c, i) => fromTeams.includes(c) ? i : -1).filter(i => i >= 0)).slice(0, n);
+  for (const i of idx){ setOwn(i, toTeam); replaceCard(i); }
+  return idx;
+}
+
+function teamsForJoin(){ return (H.ph === "play" || H.ph === "ready") && H.act ? H.act.split("") : teamIds(H.nt); }
+function pickTeam(){
+  const ts = teamsForJoin();
+  const c = ts.map(t => H.ro.filter(e => e.t === t).length);
+  const min = Math.min(...c);
+  return pick(ts.filter((t, i) => c[i] === min));
+}
+function reshuffle(){
+  const ts = shuffle(teamIds(H.nt));
+  shuffle(H.ro).forEach((e, i) => { e.t = ts[i % ts.length]; });
+}
+
+function hostStartAsHost(){
+  if (URL_ROOM) return;
+  ROOM = store.get("tf-code") || newCode(); store.set("tf-code", ROOM);
+  qrData = ""; $("qrSmall").textContent = "";
+  Shim.hostRoom(ROOM);
+  ensureAudio();
+  const saved = store.get("tf-host");
+  const now = Date.now();
+  if (saved && saved.v === V && now - (saved.savedAt || 0) < 3*3600*1000){
+    H = saved;
+    if (H.ph === "play" && H.endAt <= now){ H.ph = "end"; H.pv = null; H.fv = false; }
+    if (H.ph === "ready") H.ph = "lobby";
+  }
+  else H = { v:V, ph:"lobby", dur:Number($("selDur").value), lang:$("selLang").value, nt:Number($("selTeams").value), mx:Number($("selMax").value),
+             act:"", n:30, left:0, words:[], own:"", it:"", ro:[], x:[], fx:[], ev:[], ek:0, bp:[], pv:null, fv:false, used:[], k:0 };
+  H.since = now; H.n = H.n || 30;
+  H.ro.forEach(e => { e.on = 0; });
+  lastN = new Map(); bag = []; seenEk = -1;
+  mode = "host"; prevOwn = "";
+  $("selDur").value = String(H.dur); $("selLang").value = H.lang; $("selTeams").value = String(H.nt); $("selMax").value = String(H.mx);
+  hostSync(true);
+}
+
+function hostSync(force){
+  if (mode !== "host" || !H) return;
+  let changed = !!force;
+  const now = Date.now();
+  const present = new Map();
+  for (const pe of room.peers()){
+    const p = pe.presence;
+    if (!p || p.role !== "p" || !okSid(p.sid)) continue;
+    const prev = present.get(p.sid);
+    if (!prev || pe.updatedAt > prev.updatedAt) present.set(p.sid, pe);
+  }
+  const safeName = s => { const n = clean(s, 10); return n && !isBad(n) ? n : "이름 없음"; };
+  for (const e of H.ro){
+    const pe = present.get(e.id); const on = pe ? 1 : 0;
+    if (e.on !== on){ e.on = on; changed = true; }
+    if (pe){ const nm = safeName(pe.presence.nm); if (nm !== e.n){ e.n = nm; changed = true; } }
+  }
+  if (H.ph === "lobby"){
+    const before = H.ro.length; H.ro = H.ro.filter(e => e.on);
+    if (H.ro.length !== before) changed = true;
+  }
+  if ((H.ph === "lobby" || H.ph === "end") && H.ro.length > H.mx){ H.ro = H.ro.slice(0, H.mx); changed = true; }
+
+  const x = [];
+  for (const [sid, pe] of present){
+    if (H.ro.some(e => e.id === sid)) continue;
+    if (H.ro.length >= H.mx){ x.push(sid); continue; }
+    H.ro.push({ id:sid, n:safeName(pe.presence.nm), t:pickTeam(), s:0, on:1 });
+    changed = true;
+  }
+  if (JSON.stringify(x) !== JSON.stringify(H.x)){ H.x = x; changed = true; }
+  if (H.ph === "lobby"){ const n = sizeFor(H.ro.length); if (n !== H.n){ H.n = n; changed = true; } }
+
+  for (const [sid, pe] of present){
+    const cl = Array.isArray(pe.presence.cl) ? pe.presence.cl.slice().sort((a,b)=>(a?.[2]||0)-(b?.[2]||0)) : [];
+    let last = lastN.get(pe.peer) || 0;
+    for (const c of cl){
+      if (!Array.isArray(c)) continue;
+      const [i, w, n] = c;
+      if (typeof n !== "number" || n <= last) continue;
+      last = n;
+      if (H.ph !== "play") continue;
+      const e = H.ro.find(r => r.id === sid);
+      if (!e || typeof w !== "string") continue;
+      const mult = H.fv ? 2 : 1;
+      const others = H.act.split("").filter(t => t !== e.t);
+      if (i === -1){
+        if (!H.pv || now > H.pv.end || norm(w) !== norm(PV[H.pv.i])) continue;
+        const idxs = stealCards(others, e.t, 3);
+        const pts = 100 * mult;
+        H.bp[+e.t] = (H.bp[+e.t] || 0) + pts; e.s += pts;
+        H.pv = null; H.nextPv = now + 18000;
+        pushEv("pv", e.t, sid, idxs);
+        changed = true; continue;
+      }
+      if (!Number.isInteger(i) || i < 0 || i >= H.n) continue;
+      if (H.words[i] !== w || H.own[i] === e.t) continue;
+      const item = H.it[i];
+      setOwn(i, e.t); replaceCard(i);
+      const pts = 10 * mult; e.s += pts; H.k++;
+      H.fx = H.fx.concat([[i, e.t, sid, H.k, pts]]).slice(-6);
+      if (item === "i") pushEv("ink", e.t, sid);
+      if (item === "m" && others.length){
+        const sc = others.map(t => count(H.own, t));
+        const top = Math.max(...sc);
+        const target = pick(others.filter((t, k) => sc[k] === top));
+        const idxs = stealCards([target], e.t, 3);
+        e.s += idxs.length * 10 * mult;
+        pushEv("mis", e.t, sid, idxs, target);
+      }
+      changed = true;
+    }
+    lastN.set(pe.peer, last);
+  }
+  if (changed) hostPublish(); else { G = H; }
+}
+
+function hostMove(sid, t){
+  const e = H.ro.find(r => r.id === sid); if (!e || !okT(t) || +t >= H.nt) return;
+  e.t = t; hostPublish();
+}
+
+function pickPv(){
+  const [a, b] = pvRange(H.lang);
+  const all = Array.from({length:b-a}, (_, k) => a + k);
+  let cand = all.filter(i => !H.used.includes(i));
+  if (!cand.length){ H.used = []; cand = all; }
+  const i = pick(cand); H.used.push(i); return i;
+}
+function placeItem(){
+  const free = []; for (let i=0;i<H.n;i++) if (H.it[i] === ".") free.push(i);
+  if (!free.length) return;
+  setIt(pick(free), Math.random() < .5 ? "m" : "i");
+}
+const itemCount = () => [...H.it].filter(c => c !== ".").length;
+
+function hostStart(){
+  if (!H.ro.length){ $("hMsg").textContent = "참가자가 한 명 이상 입장해야 시작할 수 있습니다."; return; }
+  H.dur = Number($("selDur").value); H.lang = $("selLang").value;
+  let act = teamIds(H.nt).filter(t => H.ro.some(e => e.t === t));
+  for (const t of teamIds(H.nt)){ if (act.length >= 2) break; if (!act.includes(t)) act.push(t); }
+  act.sort();
+  H.act = act.join("");
+  bag = shuffle(pool(H.lang));
+  H.n = sizeFor(H.ro.length);
+  H.words = []; for (let i=0;i<H.n;i++) H.words.push(drawWord(H.words));
+  const order = shuffle(act);
+  H.own = shuffle(Array.from({length:H.n}, (_, i) => order[i % order.length])).join("");
+  H.it = ".".repeat(H.n); for (let k=0;k<Math.round(H.n/15);k++) placeItem();
+  H.bp = Array(H.nt).fill(0);
+  H.ro.forEach(e => { e.s = 0; });
+  H.fx = []; H.k = 0; H.pv = null; H.fv = false; H.used = H.used || [];
+  H.ph = "ready"; H.left = 3; H.readyAt = Date.now() + 3000;
+  lastN = new Map(room.peers().map(p => [p.peer, Math.max(0, ...((p.presence?.cl)||[]).map(c => (Array.isArray(c) && c[2]) || 0))]));
+  const empty = H.nt - teamIds(H.nt).filter(t => H.ro.some(e => e.t === t)).length;
+  $("hMsg").textContent = empty > 0 ? `참가자가 없는 ${empty}개 팀은 빼고 시작합니다.` : "게임이 시작됩니다.";
+  hostPublish();
+}
+
+function hostLobby(){
+  H.ph = "lobby"; H.words = []; H.own = ""; H.it = ""; H.fx = []; H.k = 0; H.left = 0; H.act = ""; H.pv = null; H.fv = false;
+  H.ro.forEach(e => { e.s = 0; });
+  $("hMsg").textContent = "참가자 옆 목록에서 팀을 바꿀 수 있습니다.";
+  hostSync(true);
+}
+
+function hostTick(){
+  if (mode !== "host" || !H) return;
+  const now = Date.now();
+  if (H.ph === "ready"){
+    const l = Math.ceil((H.readyAt - now)/1000);
+    if (l <= 0){
+      H.ph = "play"; H.endAt = now + H.dur*1000; H.left = H.dur;
+      H.nextIt = now + 6000; H.nextPv = now + Math.min(15000, H.dur*1000/4);
+      hostPublish();
+    } else if (l !== H.left){ H.left = l; SFX.tick(); hostPublish(); }
+  } else if (H.ph === "play"){
+    const l = Math.max(0, Math.ceil((H.endAt - now)/1000));
+    if (l <= 0){ H.ph = "end"; H.left = 0; H.pv = null; H.fv = false; pushEv("end"); hostPublish(); return; }
+    let ch = l !== H.left; H.left = l;
+    const fv = l <= 10;
+    if (fv !== H.fv){ H.fv = fv; if (fv) pushEv("fv"); ch = true; }
+    if (now >= H.nextIt){ H.nextIt = now + 5000 + Math.random()*4000; if (itemCount() < Math.round(H.n/10)){ placeItem(); ch = true; } }
+    if (H.pv && now >= H.pv.end){ H.pv = null; H.nextPv = now + 12000; ch = true; }
+    if (!H.pv && now >= H.nextPv && l > 14){ H.pv = { i:pickPv(), end: now + 15000 }; pushEv("pvon"); ch = true; }
+    if (ch) hostPublish();
+  }
+}
+
+function hostOff(){
+  setPresence({ role:null, since:null, g:null });
+  store.del("tf-host"); store.del("tf-code");
+  Shim.leave();
+  mode = "join"; H = null; G = demoState(); prevOwn = ""; seenEk = -1; onRoom();
+}
+
+// ---------- wiring ----------
+$("inSid").value = me.sid || ""; $("inName").value = me.nm || "";
+$("pJoin").addEventListener("submit", join);
+$("btnLeave").onclick = leave;
+$("btnHost").onclick = hostStartAsHost;
+$("btnStart").onclick = hostStart;
+$("btnLobby").onclick = hostLobby;
+$("btnHostOff").onclick = hostOff;
+$("btnCopy").onclick = () => {
+  const done = () => { $("btnCopy").textContent = "복사됨"; setTimeout(() => { $("btnCopy").textContent = "링크 복사"; }, 1500); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($("inviteUrl")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("btnCopy").textContent = "Ctrl+C로 복사하세요"; };
+  try { navigator.clipboard.writeText(inviteUrl()).then(done, fallback); } catch(e){ fallback(); }
+};
+$("btnSnd").onclick = () => { soundOn = !soundOn; store.set("tf-snd", soundOn); if (soundOn) ensureAudio(); renderSnd(); };
+$("btnShuffle").onclick = () => { if (!H) return; reshuffle(); $("hMsg").textContent = "팀을 무작위로 다시 나눴습니다."; hostPublish(); };
+$("selTeams").onchange = () => {
+  if (!H) return; H.nt = Number($("selTeams").value); reshuffle();
+  $("hMsg").textContent = `${H.nt}팀으로 무작위 배정했습니다.`; hostPublish();
+};
+$("selMax").onchange = () => {
+  if (!H) return; H.mx = Number($("selMax").value);
+  $("hMsg").textContent = `최대 인원을 ${H.mx}명으로 바꿨습니다.`; hostSync(true);
+};
+$("selDur").onchange = () => { if (!H) return; H.dur = Number($("selDur").value); hostPublish(); };
+$("selLang").onchange = () => { if (!H) return; H.lang = $("selLang").value; hostPublish(); };
+
+const ti = $("typeIn");
+const isWord = v => (G.words || []).includes(v.trim());
+ti.addEventListener("keydown", e => {
+  ensureAudio();
+  if (e.key === "Enter"){
+    e.preventDefault();
+    if (e.isComposing || e.keyCode === 229){ pendingSubmit = true; return; }
+    submitWord(); return;
+  }
+  if (e.key === " " || e.code === "Space"){
+    if (pvTyping(ti.value) && !isWord(ti.value)) return;   // 속담은 띄어쓰기 허용
+    e.preventDefault();
+    if (e.isComposing || e.keyCode === 229){ pendingSubmit = true; return; }
+    submitWord();
+  }
+});
+ti.addEventListener("compositionend", () => { if (pendingSubmit){ pendingSubmit = false; setTimeout(submitWord, 0); } });
+ti.addEventListener("input", () => {
+  if (/\s$/.test(ti.value) && !(pvTyping(ti.value) && !isWord(ti.value))){ ti.value = ti.value.trim(); submitWord(); }
+  else { renderBoard(); renderPv(); }
+});
+
+setInterval(hostTick, 200);
+setInterval(() => { if (mode === "player" && combo && Date.now() - lastHitAt > 3500){ combo = 0; $("myCombo").textContent = 0; } }, 500);
+renderSnd();
+render();
+
+room = Shim;
+room.onConnection(c => {
+  connected = c;
+  $("dot").classList.toggle("on", c);
+  $("connTxt").textContent = Shim.failed() ? "이 브라우저는 연결을 지원하지 않음" : c ? "실시간 연결됨" : (Shim.role() ? "연결 중" : "대기 중");
+  render();
+});
+room.onPeers(() => onRoom());
+if (URL_ROOM) Shim.joinRoom(URL_ROOM);
+else { const sv = store.get("tf-host"); if (sv && sv.v === V && store.get("tf-code") && Date.now() - (sv.savedAt || 0) < 3*3600*1000) hostStartAsHost(); }
+render();
+})();
+</script>
+</body>
+</html>

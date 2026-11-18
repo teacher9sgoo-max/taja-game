@@ -181,6 +181,9 @@ button{cursor:pointer}
 .typebar{position:sticky;bottom:env(safe-area-inset-bottom,0px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;gap:10px;align-items:center;z-index:20}
 .typebar input{flex:1;min-width:0;font-family:var(--f-card);font-size:1.9rem;border:3px solid var(--tc,var(--line));border-radius:12px;padding:8px 16px;background:var(--bg)}
 .typebar input:disabled{opacity:.55}
+.typebar .clr{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:0 14px;height:52px;font-family:var(--f-card);font-size:1.05rem}
+.typebar .clr:active{transform:scale(.96)}
+.typebar .clr:disabled{opacity:.4}
 .typebar .fb{min-width:7.5em;font-family:var(--f-arcade);font-size:1rem;text-align:right}
 .fb.ok{color:var(--ok)} .fb.no{color:var(--warn)} .fb.gold{color:var(--gold)}
 .shake{animation:shake .25s}
@@ -223,6 +226,8 @@ button{cursor:pointer}
   .me{grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
   .stat .n{font-size:1.5rem}
   .typebar input{font-size:1.4rem}
+  .typebar .clr{height:46px;padding:0 10px;font-size:.95rem}
+  .typebar .fb{min-width:4.5em}
 }
 @media (prefers-reduced-motion:reduce){
   .card.boss{animation:none}
@@ -332,6 +337,7 @@ button{cursor:pointer}
 
   <div id="typebar" class="typebar" hidden>
     <input id="typeIn" aria-label="단어 입력" placeholder="단어 입력 후 Enter" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button type="button" id="btnClr" class="clr" title="입력 지우기 (Esc)">지우기</button>
     <span id="fb" class="fb" aria-live="polite"></span>
   </div>
 </div>
@@ -997,7 +1003,7 @@ function renderPanels(){
     const frozen = isFrozen();
     const tb = $("typebar"); tb.hidden = false; tb.className = "typebar " + cls + (frozen && G.ph === "play" ? " frozen" : "");
     const playable = G.ph === "play" && !!e && !!e.on && !frozen;
-    $("typeIn").disabled = !playable;
+    $("typeIn").disabled = !playable; $("btnClr").disabled = !playable;
     $("typeIn").placeholder = frozen && G.ph === "play" ? "얼음! 잠시 입력할 수 없습니다" : playable ? (G.md === "clue" ? "뜻에 맞는 용어 입력 후 Enter" : "단어 입력 후 Enter") : "게임이 시작되면 입력할 수 있습니다";
   } else $("typebar").hidden = true;
 
@@ -1218,6 +1224,14 @@ function feedback(txt, cls){
   const fb = $("fb"); fb.textContent = txt; fb.className = "fb " + cls;
   clearTimeout(fbTimer); fbTimer = setTimeout(() => { fb.textContent = ""; }, 1400);
 }
+let composing = false;
+function clearInput(){
+  const inp = $("typeIn");
+  inp.value = "";
+  if (composing){ composing = false; inp.blur(); inp.value = ""; setTimeout(() => { inp.value = ""; if (!inp.disabled) inp.focus(); renderBoard(); renderPv(); }, 0); }
+  setTimeout(() => { if (inp.value && inp.value.length <= 1 && clearInput.at && Date.now() - clearInput.at < 120) inp.value = ""; }, 30);
+  clearInput.at = Date.now();
+}
 function bump(w){ myStats.a++; myStats.k += strokes(w); }
 function claim(c){ myN++; myClaims = myClaims.concat([[c[0], c[1], myN]]).slice(-6); setPresence({ cl: myClaims, st:{ ...myStats } }); }
 function submitWord(){
@@ -1226,22 +1240,22 @@ function submitWord(){
   const e = myEntry(); if (!e || !e.on) return;
   if (isFrozen()){ feedback("얼음!", "no"); return; }
   const p = pvText();
-  if (p && norm(w) === norm(p)){ bump(w); claim([-1, w]); inp.value = ""; feedback("속담 도전!", "gold"); renderPv(); return; }
-  if (G.md === "clue"){ bump(w); claim([-2, w]); inp.value = ""; feedback("제출!", "ok"); return; }
+  if (p && norm(w) === norm(p)){ bump(w); claim([-1, w]); clearInput(); feedback("속담 도전!", "gold"); renderPv(); return; }
+  if (G.md === "clue"){ bump(w); claim([-2, w]); clearInput(); feedback("제출!", "ok"); return; }
   const idxs = []; (G.words || []).forEach((x, k) => { if (x === w) idxs.push(k); });
   if (!idxs.length){
-    if (pvTyping(w)){ feedback("속담을 끝까지", "gold"); return; }
     bump(w); setPresence({ st:{ ...myStats } });
-    feedback("없는 단어", "no"); SFX.miss(); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); return;
+    clearInput(); renderBoard(); renderPv();
+    feedback("틀림", "no"); SFX.miss(); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); return;
   }
   const bossI = G.bs && idxs.includes(G.bs[0]) ? G.bs[0] : -1;
   const i = bossI >= 0 ? bossI : idxs.find(k => G.own[k] !== e.t && !(G.sh || "").includes(G.own[k]));
   if (i === undefined){
     bump(w); setPresence({ st:{ ...myStats } });
-    feedback(idxs.some(k => G.own[k] !== e.t) ? "방패 중" : "이미 우리 팀", "no"); inp.value = ""; renderBoard(); return;
+    feedback(idxs.some(k => G.own[k] !== e.t) ? "방패 중" : "이미 우리 팀", "no"); clearInput(); renderBoard(); return;
   }
   bump(w); claim([i, w]);
-  inp.value = ""; feedback(bossI >= 0 ? "보스 공격!" : "뒤집기!", "ok"); renderBoard(); renderPv();
+  clearInput(); feedback(bossI >= 0 ? "보스 공격!" : "뒤집기!", "ok"); renderBoard(); renderPv();
 }
 
 // ---------- host ----------
@@ -1597,6 +1611,8 @@ $("btnCopy").onclick = () => {
   const fallback = () => { const r = document.createRange(); r.selectNodeContents($("inviteUrl")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $("btnCopy").textContent = "Ctrl+C로 복사하세요"; };
   try { navigator.clipboard.writeText(inviteUrl()).then(done, fallback); } catch(e){ fallback(); }
 };
+$("btnClr").addEventListener("pointerdown", e => e.preventDefault());
+$("btnClr").onclick = () => { pendingSubmit = false; clearInput(); $("typeIn").focus(); renderBoard(); renderPv(); };
 $("btnSnd").onclick = () => { soundOn = !soundOn; store.set("tf-snd", soundOn); if (soundOn) ensureAudio(); renderSnd(); };
 $("btnShuffle").onclick = () => { if (!H) return; reshuffle(); $("hMsg").textContent = "팀을 무작위로 다시 나눴습니다."; hostPublish(); };
 $("chkLate").onchange = () => {
@@ -1626,12 +1642,28 @@ const spaceSubmits = v => {
   if (!isWord(t) && (G.words || []).some(w => w.startsWith(t + " "))) return false;
   return true;
 };
+// Enter는 결과와 상관없이 항상 입력창을 비웁니다 (한글 입력 중 마지막 글자가 다시 남는 것도 막음)
+let enterGuard = 0, lastEntered = "";
+const isLeftover = v => !!v && !!lastEntered && lastEntered.endsWith(v) && [...v].length <= 1;
+function enterSubmit(){
+  lastEntered = $("typeIn").value.trim();
+  submitWord();
+  clearInput();
+  enterGuard = Date.now() + 200;
+  setTimeout(() => { const v = $("typeIn").value; if (isLeftover(v)) $("typeIn").value = ""; }, 60);
+  renderBoard(); renderPv();
+}
+ti.addEventListener("compositionstart", () => { composing = true; });
+ti.addEventListener("compositionend", () => { composing = false; });
 ti.addEventListener("keydown", e => {
   ensureAudio();
+  if (e.key === "Escape" || (e.key === "Backspace" && (e.ctrlKey || e.altKey || e.metaKey))){
+    e.preventDefault(); pendingSubmit = false; clearInput(); feedback("지움", "no"); renderBoard(); renderPv(); return;
+  }
   if (e.key === "Enter"){
     e.preventDefault();
     if (e.isComposing || e.keyCode === 229){ pendingSubmit = true; return; }
-    submitWord(); return;
+    enterSubmit(); return;
   }
   if (e.key === " " || e.code === "Space"){
     if (!spaceSubmits(ti.value)) return;
@@ -1640,8 +1672,9 @@ ti.addEventListener("keydown", e => {
     submitWord();
   }
 });
-ti.addEventListener("compositionend", () => { if (pendingSubmit){ pendingSubmit = false; setTimeout(submitWord, 0); } });
+ti.addEventListener("compositionend", () => { if (pendingSubmit){ pendingSubmit = false; setTimeout(enterSubmit, 0); } });
 ti.addEventListener("input", () => {
+  if (Date.now() < enterGuard && isLeftover(ti.value)){ ti.value = ""; renderBoard(); renderPv(); return; }
   if (/\s$/.test(ti.value) && spaceSubmits(ti.value)){ ti.value = ti.value.trim(); submitWord(); }
   else { renderBoard(); renderPv(); }
 });

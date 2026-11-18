@@ -77,7 +77,7 @@ button{cursor:pointer}
 /* stage */
 .stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
 .boardwrap{position:relative;min-width:0}
-.board{--cols:6;--mcols:5;--ch:clamp(54px,9vh,84px);--cf:clamp(1.05rem,2vw,1.65rem);display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:8px;padding:8px;border-radius:14px;background:var(--surface);border:1px solid var(--line);transition:box-shadow .3s}
+.board{--cols:6;--mcols:4;--ch:clamp(50px,7.8vh,76px);--cf:clamp(1.05rem,2vw,1.6rem);display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:8px;padding:8px;border-radius:14px;background:var(--surface);border:1px solid var(--line);transition:box-shadow .3s}
 .board.fever{box-shadow:0 0 0 2px var(--gold),0 0 30px color-mix(in srgb,var(--gold) 35%,transparent)}
 .card{position:relative;height:var(--ch);border-radius:10px;display:flex;align-items:center;justify-content:center;
   background:var(--tc,var(--line));border-bottom:5px solid color-mix(in srgb,var(--tc,var(--line)) 60%,#000);
@@ -85,8 +85,8 @@ button{cursor:pointer}
   transition:box-shadow .15s, transform .15s; user-select:none}
 .card.n{--tc:var(--surface2);color:var(--muted);text-shadow:none}
 .card.hint{box-shadow:0 0 0 4px var(--gold);transform:translateY(-3px)}
-.board[data-n="42"]{--cols:7;--mcols:6;--ch:clamp(50px,7.6vh,74px);--cf:clamp(.95rem,1.75vw,1.45rem)}
-.board[data-n="56"]{--cols:8;--mcols:7;--ch:clamp(46px,6.6vh,66px);--cf:clamp(.9rem,1.5vw,1.3rem)}
+.board[data-n="49"]{--cols:7;--mcols:5;--ch:clamp(46px,6.6vh,66px);--cf:clamp(.95rem,1.75vw,1.4rem)}
+.board[data-n="64"]{--cols:8;--mcols:6;--ch:clamp(40px,5.6vh,58px);--cf:clamp(.88rem,1.45vw,1.25rem)}
 .card.flip{animation:flip .38s ease}
 .card.gone{transform:scale(.15) rotate(-8deg);opacity:0;transition:transform .16s ease-in,opacity .16s ease-in;box-shadow:none}
 .card.spawn{animation:spawn .3s cubic-bezier(.3,1.6,.5,1)}
@@ -149,6 +149,10 @@ button{cursor:pointer}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
 .btn.go{background:var(--ok);color:var(--bg);font-family:var(--f-arcade);font-weight:400;font-size:1.1rem}
 .msg{font-size:.85rem;color:var(--muted);margin:0}
+.tog{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer}
+.tog input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ok);flex:none}
+.tog b{display:block;font-weight:700}
+.tog small{display:block;color:var(--muted);font-size:.78rem;line-height:1.4}
 .msg.warn{color:var(--warn)}
 .teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .team h4{margin:0 0 6px;font-family:var(--f-card);font-weight:400;font-size:1.05rem;display:flex;justify-content:space-between;color:color-mix(in srgb,var(--tc) 60%,var(--ink))}
@@ -181,6 +185,27 @@ button{cursor:pointer}
 .fb.ok{color:var(--ok)} .fb.no{color:var(--warn)} .fb.gold{color:var(--gold)}
 .shake{animation:shake .25s}
 
+.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;width:100%;resize:vertical;font:inherit;font-size:.85rem;line-height:1.45}
+.card.boss{box-shadow:0 0 0 3px var(--gold),0 0 22px color-mix(in srgb,var(--gold) 55%,transparent);animation:bossPulse 1s ease-in-out infinite alternate;z-index:2}
+@keyframes bossPulse{to{box-shadow:0 0 0 5px var(--gold),0 0 34px color-mix(in srgb,var(--gold) 70%,transparent)}}
+.card .hp{position:absolute;left:8px;right:34px;bottom:5px;height:5px;border-radius:3px;background:#0007;overflow:hidden}
+.card .hp i{display:block;height:100%;background:var(--gold)}
+.card .hpn{position:absolute;right:6px;bottom:1px;font-family:var(--f-arcade);font-size:.72rem;color:var(--gold);text-shadow:0 1px 0 #000}
+.badge.f{background:#c9f1ff;color:#073042;box-shadow:0 2px 0 #5fb7d6}
+.badge.s{background:#dfe3ff;color:#1d2470;box-shadow:0 2px 0 #7d86d8}
+.badge.b{right:auto;left:-5px;background:var(--gold);color:var(--bg)}
+.card.shield{box-shadow:inset 0 0 0 3px #e6f0ff,0 0 14px #8fb8ff}
+.card.clue .ct{font-family:var(--f-body);font-weight:700;font-size:clamp(.72rem,1.05vw,.95rem);line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-shadow:none}
+.typebar.frozen input{background:color-mix(in srgb,#c9f1ff 22%,var(--bg));border-color:#c9f1ff;box-shadow:0 0 18px #7fd8ff}
+.chip .tag2{font-size:.7rem;padding:1px 7px;border-radius:999px;background:var(--ink);color:var(--bg);align-self:center}
+.chip .w{color:var(--gold);font-size:.85rem;letter-spacing:.05em}
+.float.bad{color:#ff8a8a}
+.awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;text-align:left}
+.awards div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.awards small{display:block;color:var(--muted);font-size:.75rem}
+.awards b{display:block;font-family:var(--f-card);font-weight:400;font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.awards span{color:var(--gold);font-size:.85rem}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:70}
 .as-player .stage{grid-template-columns:1fr}
 .as-player #pRoster{display:none}
 
@@ -188,7 +213,8 @@ button{cursor:pointer}
 @media (max-width:560px){
   .board{grid-template-columns:repeat(var(--mcols),minmax(0,1fr));gap:6px;padding:6px}
   .card{height:48px;font-size:.95rem;border-bottom-width:4px}
-  .board[data-n="56"] .card{height:42px;font-size:.85rem}
+  .board[data-n="49"] .card{height:44px;font-size:.9rem}
+  .board[data-n="64"] .card{height:40px;font-size:.82rem}
   .bar{grid-template-columns:1fr auto}
   .hudr{display:none}
   .brand h1{font-size:1.25rem}
@@ -199,6 +225,7 @@ button{cursor:pointer}
   .typebar input{font-size:1.4rem}
 }
 @media (prefers-reduced-motion:reduce){
+  .card.boss{animation:none}
   .card.flip,.card.spawn,.shake,.card.mine::after,.card.boom::before,.badge,.timer.low,.toast,.float,.chip.hit{animation:none}
   .card{transition:none}
   .card.gone{transition:none}
@@ -224,7 +251,7 @@ button{cursor:pointer}
   <main class="stage">
     <section class="boardwrap">
       <div id="pvBar" class="pv" hidden>
-        <span class="tag">속담 찬스 +100</span>
+        <span class="tag">속담 찬스 +30</span>
         <span id="pvTxt" class="txt"></span>
         <span id="pvSec" class="sec"></span>
         <span id="pvMeter" class="meter"></span>
@@ -276,12 +303,17 @@ button{cursor:pointer}
           <div class="field"><label for="selDur">제한 시간</label>
             <select id="selDur"><option value="60">60초</option><option value="90">90초</option><option value="120" selected>120초</option><option value="180">180초</option><option value="300">5분</option></select></div>
           <div class="field"><label for="selLang">단어</label>
-            <select id="selLang"><option value="ko" selected>한글</option><option value="en">영어</option><option value="mix">한글+영어</option></select></div>
+            <select id="selLang"><option value="ko" selected>한글</option><option value="en">영어</option><option value="mix">한글+영어</option><option value="custom">직접 입력한 단어</option><option value="clue">뜻 보고 용어 맞히기</option></select></div>
+        </div>
+        <div class="field" id="cwField" hidden><label for="customWords" id="cwLabel">단어 목록</label><textarea id="customWords" rows="5" spellcheck="false"></textarea><p id="cwInfo" class="msg"></p></div>
+        <div class="row">
+          <div class="field"><label for="selRounds">라운드</label><select id="selRounds"><option value="1" selected>1판</option><option value="3">3판 2선승</option><option value="5">5판 3선승</option></select></div>
         </div>
         <div class="field"><label>학생 초대</label>
           <div class="invite"><div id="qrSmall" class="qr"></div><div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1"><span id="inviteUrl" class="url"></span><button type="button" id="btnCopy" class="btn ghost">링크 복사</button><a id="lnkPlayer" class="btn ghost" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">참가자 화면 열어 보기</a></div></div>
         </div>
         <button type="button" id="btnShuffle" class="btn ghost">팀 무작위 재배치</button>
+        <label class="tog" for="chkLate"><input type="checkbox" id="chkLate" checked><span><b>게임 중 입장 허용</b><small>끄면 게임 중에는 튕긴 학생과 새 학생 모두 다음 판부터 들어옵니다.</small></span></label>
         <div class="row">
           <button type="button" id="btnStart" class="btn go">게임 시작</button>
           <button type="button" id="btnLobby" class="btn ghost">대기실로</button>
@@ -308,9 +340,9 @@ button{cursor:pointer}
 <script>
 (() => {
 let N = 30;
-const MAXP = 30, MAXT = 10, V = 3;
-const SIZES = [30, 42, 56];
-const sizeFor = p => p <= 10 ? 30 : p <= 20 ? 42 : 56;
+const MAXP = 30, MAXT = 10, V = 4;
+const SIZES = [36, 49, 64];
+const sizeFor = p => p <= 10 ? 36 : p <= 20 ? 49 : 64;
 const GONE_MS = 500;
 const URL_ROOM = (new URLSearchParams(location.search).get("room") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 let ROOM = URL_ROOM;
@@ -331,8 +363,8 @@ function makeQr(){
 }
 function qrImg(){ const src = makeQr(); if (!src) return null; const w = document.createElement("div"); w.className = "qr"; const im = document.createElement("img"); im.src = src; im.alt = "학생 초대 QR 코드"; w.appendChild(im); return w; }
 const TN = ["빨강","파랑","초록","노랑","보라","청록","분홍","갈색","남색","회색"];
-const KO = "사과 바다 하늘 구름 나무 연필 지우개 공책 교실 운동장 친구 선생님 도서관 기차 비행기 자전거 무지개 바람 햇살 별빛 달팽이 고양이 강아지 토끼 호랑이 다람쥐 거북이 코끼리 기린 펭귄 수박 딸기 포도 바나나 복숭아 감자 고구마 옥수수 김밥 떡볶이 라면 만두 피아노 기타 노래 그림 사진 편지 우산 장갑 모자 운동화 가방 시계 안경 컴퓨터 키보드 마우스 모니터 프린터 인터넷 코딩 로봇 우주 지구 태양 행성 은하수 화산 사막 숲속 강물 폭포 계곡 등대 항구 시장 병원 우체국 소방서 경찰서 놀이터 박물관 미술관 축구 야구 농구 배구 탁구 수영 달리기 줄넘기 태권도 가을 단풍 겨울 눈사람 여름 소나기 번개 천둥 해바라기 민들레 장미 튤립 소나무 대나무 바닷가 모래성 조개 갈매기 오징어 고등어 문어 해파리 돌고래 상어 고래 빵집 케이크 초콜릿 사탕 아이스크림 주스 우유 연습 정답 도전 협동 응원 승리 열정 용기 희망 약속 행복 감사 배려 자석 실험 현미경 망원경 지도 나침반 퍼즐 블록 알고리즘 데이터 반복문 변수 함수 센서".split(" ");
-const EN = "apple banana cloud river ocean pencil eraser school friend teacher library train rocket bicycle rainbow window garden flower tiger rabbit turtle dolphin penguin giraffe monkey orange grape lemon cookie bread pizza piano guitar music camera letter umbrella jacket sneaker clock glasses computer keyboard mouse screen robot planet earth moon star desert island forest bridge castle market doctor soccer tennis swim jump winter summer autumn spring snow storm thunder sunflower maple coding puzzle magnet science history number circle square yellow purple silver golden happy brave quick smart kind team power dream light shadow energy travel journey morning evening family village mountain valley harbor captain dragon wizard knight data loop sensor".split(" ");
+const KO = "사과 바다 하늘 구름 나무 연필 지우개 공책 교실 운동장 친구 선생님 도서관 기차 비행기 자전거 무지개 바람 햇살 별빛 달팽이 고양이 강아지 토끼 호랑이 다람쥐 거북이 코끼리 기린 펭귄 수박 딸기 포도 바나나 복숭아 감자 고구마 옥수수 김밥 떡볶이 라면 만두 피아노 기타 노래 그림 사진 편지 우산 장갑 모자 운동화 가방 시계 안경 컴퓨터 키보드 마우스 모니터 프린터 인터넷 코딩 로봇 우주 지구 태양 행성 은하수 화산 사막 숲속 강물 폭포 계곡 등대 항구 시장 병원 우체국 소방서 경찰서 놀이터 박물관 미술관 축구 야구 농구 배구 탁구 수영 달리기 줄넘기 태권도 가을 단풍 겨울 눈사람 여름 소나기 번개 천둥 해바라기 민들레 장미 튤립 소나무 대나무 바닷가 모래성 조개 갈매기 오징어 고등어 문어 해파리 돌고래 상어 고래 빵집 케이크 초콜릿 사탕 아이스크림 주스 우유 연습 정답 도전 협동 응원 승리 열정 용기 희망 약속 행복 감사 배려 자석 실험 현미경 망원경 지도 나침반 퍼즐 블록 알고리즘 데이터 반복문 변수 함수 센서 가족 이웃 마을 도시 시골 학생 공부 숙제 시험 방학 소풍 체육 음악 미술 과학 수학 국어 사회 역사 독서 일기 사전 칠판 책상 의자 필통 가위 색종이 크레파스 물감 달력 사물함 급식 식판 숟가락 젓가락 냉장고 세탁기 텔레비전 전화기 선풍기 청소기 거울 침대 이불 베개 창문 현관 계단 엘리베이터 지붕 마당 정원 울타리 사자 늑대 여우 사슴 판다 캥거루 하마 낙타 얼룩말 원숭이 수달 너구리 고슴도치 햄스터 앵무새 독수리 부엉이 참새 비둘기 까치 오리 거위 백조 공작 개구리 도마뱀 나비 잠자리 꿀벌 개미 무당벌레 메뚜기 반딧불이 꽃잎 새싹 열매 씨앗 뿌리 줄기 나뭇잎 잔디 선인장 연꽃 국화 벚꽃 진달래 개나리 무궁화 코스모스 들판 언덕 바위 동굴 호수 연못 해변 파도 갯벌 빙하 오로라 노을 새벽 아침 저녁 별자리 북극성 혜성 김치 비빔밥 불고기 된장국 미역국 떡국 송편 호떡 붕어빵 팥빙수 샌드위치 햄버거 스파게티 샐러드 볶음밥 계란말이 주먹밥 군고구마 감귤 참외 자두 체리 키위 레몬 망고 블루베리 토마토 오이 당근 양파 버섯 시금치 브로콜리 호박 버스 지하철 택시 트럭 구급차 소방차 오토바이 헬리콥터 잠수함 유람선 돛단배 열기구 공원 수영장 운동회 체육관 식물원 동물원 수족관 놀이공원 영화관 서점 문구점 약국 은행 식당 공항 기차역 정류장 의사 간호사 요리사 소방관 경찰관 과학자 화가 작가 가수 농부 어부 우주인 발명가 지혜 친절 정직 성실 노력 인내 우정 사랑 평화 자유 질서 규칙 차례 예절 인사 칭찬 격려 꿈나무 미래 목표 계획 발표 토론 질문 대답 생각 상상 프로그램 디버그 조건문 배열 입력 출력 화면 버튼 와이파이 배터리 충전기 스마트폰 태블릿 이메일 저장 파일 폴더 드론 인공지능 전기 전구 건전지 용수철 지렛대 도르래 온도계 저울".split(" ");
+const EN = "apple banana cloud river ocean pencil eraser school friend teacher library train rocket bicycle rainbow window garden flower tiger rabbit turtle dolphin penguin giraffe monkey orange grape lemon cookie bread pizza piano guitar music camera letter umbrella jacket sneaker clock glasses computer keyboard mouse screen robot planet earth moon star desert island forest bridge castle market doctor soccer tennis swim jump winter summer autumn spring snow storm thunder sunflower maple coding puzzle magnet science history number circle square yellow purple silver golden happy brave quick smart kind team power dream light shadow energy travel journey morning evening family village mountain valley harbor captain dragon wizard knight data loop sensor breakfast lunch dinner kitchen bedroom pillow blanket mirror ladder candle basket bottle button pocket ticket airport station subway taxi truck engine helmet galaxy comet meteor volcano canyon glacier beach shell coral whale shark octopus jellyfish seal eagle owl parrot sparrow butterfly ladybug spider beetle cactus tulip rose daisy carrot potato tomato onion pepper cheese butter honey sugar salad noodle sandwich hamburger popcorn chocolate candy juice water milk lake pond hill cave rock sand stone rain wind fog sky sunshine student class lesson homework answer question notebook marker ruler scissors crayon paint brush drawing story poem song dance drum violin flute trumpet smile laugh hope peace honest gentle polite careful helpful thankful".split(" ");
 const PV_KO = [
   "가는 말이 고와야 오는 말이 곱다","낮말은 새가 듣고 밤말은 쥐가 듣는다","발 없는 말이 천 리 간다","세 살 버릇 여든까지 간다",
   "티끌 모아 태산","원숭이도 나무에서 떨어진다","백지장도 맞들면 낫다","소 잃고 외양간 고친다","천 리 길도 한 걸음부터",
@@ -341,12 +373,14 @@ const PV_KO = [
   "벼는 익을수록 고개를 숙인다","빈 수레가 요란하다","사공이 많으면 배가 산으로 간다","서당 개 삼 년이면 풍월을 읊는다","식은 죽 먹기",
   "윗물이 맑아야 아랫물이 맑다","지렁이도 밟으면 꿈틀한다","콩 심은 데 콩 나고 팥 심은 데 팥 난다","하늘이 무너져도 솟아날 구멍이 있다",
   "호랑이도 제 말 하면 온다","구슬이 서 말이라도 꿰어야 보배","쇠뿔도 단김에 빼라","열 번 찍어 안 넘어가는 나무 없다","같은 값이면 다홍치마",
-  "개구리 올챙이 적 생각 못 한다","공든 탑이 무너지랴","배보다 배꼽이 더 크다","병 주고 약 준다","꿩 먹고 알 먹는다","하나를 보면 열을 안다"
+  "개구리 올챙이 적 생각 못 한다","공든 탑이 무너지랴","배보다 배꼽이 더 크다","병 주고 약 준다","꿩 먹고 알 먹는다","하나를 보면 열을 안다",
+  "고생 끝에 낙이 온다","급할수록 돌아가라","될성부른 나무는 떡잎부터 알아본다","말 한마디에 천 냥 빚을 갚는다","목마른 사람이 우물 판다","무소식이 희소식","보기 좋은 떡이 먹기도 좋다","비 온 뒤에 땅이 굳어진다","산 넘어 산","소문난 잔치에 먹을 것 없다","시작이 반이다","아는 길도 물어 가라","옷이 날개","일찍 일어나는 새가 벌레를 잡는다","제 눈에 안경","좋은 약은 입에 쓰다","쥐구멍에도 볕 들 날 있다","짚신도 짝이 있다","첫술에 배부르랴","친구 따라 강남 간다","가랑비에 옷 젖는 줄 모른다","남의 떡이 더 커 보인다","도토리 키 재기","땅 짚고 헤엄치기","마른하늘에 날벼락","말이 씨가 된다","번갯불에 콩 볶아 먹겠다","엎질러진 물","작은 고추가 더 맵다","하룻강아지 범 무서운 줄 모른다","혹 떼러 갔다 혹 붙여 온다"
 ];
 const PV_EN = [
   "practice makes perfect","time is money","better late than never","no pain no gain","look before you leap","slow and steady wins the race",
   "two heads are better than one","the early bird catches the worm","actions speak louder than words","where there is a will there is a way",
-  "an apple a day keeps the doctor away","every cloud has a silver lining","knowledge is power","easy come easy go","seeing is believing"
+  "an apple a day keeps the doctor away","every cloud has a silver lining","knowledge is power","easy come easy go","seeing is believing",
+  "honesty is the best policy","do not judge a book by its cover","a friend in need is a friend indeed","rome was not built in a day","great minds think alike","never give up","laughter is the best medicine","the pen is mightier than the sword","haste makes waste","all is well that ends well","every dog has its day","still waters run deep"
 ];
 const PV = PV_KO.concat(PV_EN);
 const pool = l => l === "en" ? EN : l === "mix" ? KO.concat(EN) : KO;
@@ -542,10 +576,38 @@ let mode = "join";
 let me = store.get("tf-me") || { sid:"", nm:"" };
 let G = null, H = null;
 let myN = 0, myClaims = [];
+let myStats = { g:-1, a:0, k:0 };
 let lastN = new Map();
 let prevWordsShown = [];
-let prevOwn = "", prevK = 0, bag = [], seenEk = -1, wasFever = false;
-let combo = 0, lastHitAt = 0;
+let prevOwn = "", prevK = 0, bag = [], seenEk = -1;
+let combo = 0, lastHitAt = 0, frozenUntil = 0;
+
+const BOSS_HP = 5, BOSS_PTS = 40, PV_PTS = 30, MINE_PTS = 20, COMBO_PTS = 10;
+const ITEM_NAME = { m:"미사일", i:"먹물", f:"얼음", s:"방패" };
+
+// 한글 타수(자판 입력 횟수) 계산
+const CJ = [9,10,11,14,15,16,19], CK = [3,5,6,9,10,11,12,13,14,15,18];
+function strokes(s){
+  let k = 0;
+  for (const ch of String(s)){
+    const c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3){ const x = c - 0xAC00, jong = x % 28, jung = ((x / 28) | 0) % 21; k += 2 + (jong ? 1 : 0) + (CJ.includes(jung) ? 1 : 0) + (CK.includes(jong) ? 1 : 0); }
+    else if (ch.trim()) k += 1;
+  }
+  return k;
+}
+function parseWords(txt){ return [...new Set(String(txt || "").split(/[\n,]+/).map(s => clean(s, 20)).filter(s => s && !isBad(s)))]; }
+function parseClues(txt){
+  const out = [], seen = new Set();
+  for (const line of String(txt || "").split(/\n+/)){
+    const m = line.match(/^\s*([^:\t]+?)\s*[:\t]\s*(.+)$/) || line.match(/^\s*(.+?)\s+-\s+(.+)$/);
+    if (!m) continue;
+    const a = clean(m[1], 20), q = clean(m[2], 60);
+    if (!a || !q || isBad(a) || isBad(q) || seen.has(norm(a))) continue;
+    seen.add(norm(a)); out.push([a, q]);
+  }
+  return out;
+}
 
 // ---------- sound ----------
 let ac = null, soundOn = store.get("tf-snd") !== false;
@@ -564,11 +626,19 @@ const SFX = {
   miss(){ tone(150,.14,"sawtooth",.04); },
   missile(){ tone(900,.6,"sawtooth",.035,120); tone(80,.3,"square",.06,40,.6); },
   ink(){ tone(220,.35,"triangle",.06,60); },
+  ice(){ [2000,1600,2400].forEach((f,i) => tone(f,.12,"sine",.04,0,i*.06)); },
+  shield(){ tone(330,.25,"triangle",.05,660); },
+  mine(){ tone(120,.4,"sawtooth",.07,40); },
+  boss(){ [196,196,247,294].forEach((f,i) => tone(f,.18,"square",.05,0,i*.16)); },
+  bossHit(){ tone(300,.06,"square",.05,180); },
+  storm(){ tone(200,.8,"sawtooth",.03,800); },
+  combo(){ [880,1175,1568].forEach((f,i) => tone(f,.08,"square",.04,0,i*.05)); },
   proverb(){ [523,659,784,1046].forEach((f,i) => tone(f,.12,"square",.045,0,i*.09)); },
   chance(){ tone(880,.1,"triangle",.05); tone(1175,.16,"triangle",.05,0,.1); },
   fever(){ [440,554,659,880].forEach((f,i) => tone(f,.1,"square",.04,0,i*.07)); },
   tick(){ tone(1200,.04,"square",.025); },
-  end(){ [784,659,523].forEach((f,i) => tone(f,.18,"triangle",.05,0,i*.16)); }
+  end(){ [784,659,523].forEach((f,i) => tone(f,.18,"triangle",.05,0,i*.16)); },
+  win(){ [523,659,784,1046,1318].forEach((f,i) => tone(f,.16,"square",.045,0,i*.12)); }
 };
 function renderSnd(){ $("btnSnd").setAttribute("aria-pressed", soundOn); $("btnSnd").textContent = soundOn ? "소리 켬" : "소리 끔"; }
 
@@ -576,36 +646,54 @@ function renderSnd(){ $("btnSnd").setAttribute("aria-pressed", soundOn); $("btnS
 for (let i=2;i<=MAXP;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i+"명"; $("selMax").appendChild(o); }
 for (let i=2;i<=MAXT;i++){ const o=document.createElement("option"); o.value=i; o.textContent=i+"팀"; $("selTeams").appendChild(o); }
 $("selMax").value = "30"; $("selTeams").value = "2";
+$("customWords").value = store.get("tf-cw") || "";
 
 // ---------- demo board ----------
 function demoState(){
-  const w = shuffle(KO).slice(0, N);
-  let own = ""; for (let i=0;i<N;i++) own += String((i + Math.floor(i/6)) % 2);
-  const it = ".".repeat(N).split(""); it[7] = "m"; it[22] = "i";
-  return { ph:"demo", n:30, dur:120, left:120, nt:2, mx:30, act:"01", words:w, own, it:it.join(""), ro:[], x:[], fx:[], ev:[], ek:0, bp:[0,0], pv:null, fv:false, k:0 };
+  const w = shuffle(KO).slice(0, 36);
+  let own = ""; for (let i=0;i<36;i++) own += String((i + Math.floor(i/6)) % 2);
+  const it = ".".repeat(36).split(""); it[7] = "m"; it[22] = "i"; it[15] = "f"; it[30] = "s";
+  return { ph:"demo", n:36, dur:120, left:120, nt:2, mx:30, act:"01", md:"", words:w, own, it:it.join(""), ro:[], x:[], fx:[], ev:[], ek:0,
+    bp:[0,0], pv:null, fv:false, lt:true, k:0, sh:"", fz:"", bs:[9, {}, 20], cb:null, rd:[1,1,[],0], gid:0 };
 }
 G = demoState();
 
 // ---------- wire format ----------
 function encode(S){
   const now = Date.now();
-  return { v:V, ph:S.ph, n:S.n || 30, dur:S.dur, left:S.left, nt:S.nt, mx:S.mx, act:S.act, words:S.words, own:S.own, it:S.it,
-    ro:S.ro.map(e => [e.id, e.n, e.t, e.s, e.on]), x:S.x.slice(0,12), fx:S.fx, ev:S.ev, ek:S.ek, bp:S.bp,
-    pv:S.pv ? [S.pv.i, Math.max(0, Math.ceil((S.pv.end - now)/1000))] : null, fv:!!S.fv, k:S.k };
+  const live = o => Object.keys(o || {}).filter(t => o[t] > now).join("");
+  return { v:V, ph:S.ph, n:S.n || 36, dur:S.dur, left:S.left, nt:S.nt, mx:S.mx, act:S.act, md:S.clue ? "clue" : "",
+    words:S.words, own:S.own, it:S.it,
+    ro:S.ro.map(e => [e.id, e.n, e.t, e.s|0, e.on, e.h|0, e.m|0, e.p|0, e.b|0, e.a|0, e.k|0, e.mn|0]),
+    x:S.x.slice(0,12), fx:S.fx, ev:S.ev, ek:S.ek, bp:S.bp,
+    pv:S.pv ? [S.pv.i, Math.max(0, Math.ceil((S.pv.end - now)/1000))] : null, fv:!!S.fv, lt:S.late !== false, k:S.k,
+    sh:live(S.sh), fz:live(S.fz),
+    bs:S.boss ? [S.boss.i, S.boss.hits, Math.max(0, Math.ceil((S.boss.end - now)/1000))] : null,
+    cb:S.cb && S.cb.end > now ? [S.cb.t, Math.ceil((S.cb.end - now)/1000)] : null,
+    rd:[S.rn || 1, S.rounds || 1, S.wins || [], S.matchOver ? 1 : 0], gid:S.gid|0 };
 }
 function decode(g){
   if (!g || g.v !== V || !Array.isArray(g.words) || !Array.isArray(g.ro)) return null;
   const nt = Math.min(MAXT, Math.max(2, g.nt|0));
   const pv = Array.isArray(g.pv) && Number.isInteger(g.pv[0]) && PV[g.pv[0]] ? { i:g.pv[0], left:g.pv[1]|0 } : null;
-  return { ph:String(g.ph), n:SIZES.includes(g.n) ? g.n : 30, dur:g.dur|0, left:g.left|0, nt, mx:g.mx|0, act:typeof g.act === "string" ? g.act : "",
-    words:g.words.map(w => clean(w, 20)), own:typeof g.own === "string" ? g.own : "", it:typeof g.it === "string" ? g.it : "",
-    ro:g.ro.filter(a => Array.isArray(a) && okT(a[2])).map(a => ({ id:clean(a[0],10), n:clean(a[1],10), t:a[2], s:a[3]|0, on:a[4]?1:0 })),
+  const ts = s => typeof s === "string" ? s.replace(/[^0-9]/g, "") : "";
+  const hits = o => { const r = {}; if (o && typeof o === "object") for (const k of Object.keys(o)) if (okT(k)) r[k] = o[k]|0; return r; };
+  return { ph:String(g.ph), n:SIZES.includes(g.n) ? g.n : 36, dur:g.dur|0, left:g.left|0, nt, mx:g.mx|0, act:ts(g.act), md:g.md === "clue" ? "clue" : "",
+    words:g.words.map(w => clean(w, 60)), own:typeof g.own === "string" ? g.own : "", it:typeof g.it === "string" ? g.it : "",
+    ro:g.ro.filter(a => Array.isArray(a) && okT(a[2])).map(a => ({ id:clean(a[0],10), n:clean(a[1],10), t:a[2], s:a[3]|0, on:a[4]?1:0,
+      h:a[5]|0, m:a[6]|0, p:a[7]|0, b:a[8]|0, a:a[9]|0, k:a[10]|0, mn:a[11]|0 })),
     x:Array.isArray(g.x) ? g.x : [], fx:Array.isArray(g.fx) ? g.fx : [], ev:Array.isArray(g.ev) ? g.ev : [], ek:g.ek|0,
-    bp:Array.isArray(g.bp) ? g.bp.map(n => n|0) : [], pv, fv:!!g.fv, k:g.k|0 };
+    bp:Array.isArray(g.bp) ? g.bp.map(n => n|0) : [], pv, fv:!!g.fv, lt:g.lt !== false, k:g.k|0,
+    sh:ts(g.sh), fz:ts(g.fz),
+    bs:Array.isArray(g.bs) && Number.isInteger(g.bs[0]) ? [g.bs[0], hits(g.bs[1]), g.bs[2]|0] : null,
+    cb:Array.isArray(g.cb) && okT(g.cb[0]) ? [g.cb[0], g.cb[1]|0] : null,
+    rd:Array.isArray(g.rd) ? [g.rd[0]|0 || 1, g.rd[1]|0 || 1, Array.isArray(g.rd[2]) ? g.rd[2].map(n => n|0) : [], g.rd[3] ? 1 : 0] : [1,1,[],0],
+    gid:g.gid|0 };
 }
 const pvText = () => G.pv ? PV[G.pv.i] : "";
-const pvLeft = () => !G.pv ? 0 : (G === H && H.pv ? Math.max(0, Math.ceil((H.pv.end - Date.now())/1000)) : G.pv.left);
+const pvLeft = () => G.pv ? G.pv.left : 0;
 const teamScore = t => count(G.own, t) * 10 + ((G.bp || [])[+t] || 0);
+const isFrozen = () => { const e = myEntry(); return Date.now() < frozenUntil || !!(e && (G.fz || "").includes(e.t)); };
 
 // ---------- board ----------
 const cards = [];
@@ -616,24 +704,26 @@ function ensureCards(n){
   for (let i=0;i<n;i++){ const d=document.createElement("div"); d.className="card n"; b.appendChild(d); cards.push(d); }
   b.dataset.n = n; N = n; prevOwn = ""; prevWords = []; goneUntil = [];
 }
-ensureCards(30);
+ensureCards(36);
 const myEntry = () => mode === "player" ? (G.ro||[]).find(x => x.id === me.sid) : null;
 
-function floatAt(i, txt){
+function floatAt(i, txt, bad){
   const c = cards[i]; if (!c) return;
-  const f = document.createElement("span"); f.className = "float"; f.textContent = txt;
-  f.style.left = (c.offsetLeft + c.offsetWidth/2 - 20) + "px"; f.style.top = (c.offsetTop) + "px";
+  const f = document.createElement("span"); f.className = "float" + (bad ? " bad" : ""); f.textContent = txt;
+  f.style.left = (c.offsetLeft + c.offsetWidth/2 - 30) + "px"; f.style.top = (c.offsetTop) + "px";
   $("board").parentElement.appendChild(f); setTimeout(() => f.remove(), 950);
 }
 
 function renderBoard(){
   const own = G.own || "", words = G.words || [], it = G.it || "";
   const mine = myEntry();
-  const typed = mode === "player" ? $("typeIn").value.trim() : "";
+  const clue = G.md === "clue";
+  const typed = mode === "player" && !clue ? $("typeIn").value.trim() : "";
   const hideWords = G.ph === "lobby" || G.ph === "ready";
-  ensureCards(G.n || 30);
+  ensureCards(G.n || 36);
   const fresh = (G.fx || []).filter(f => f[3] > prevK);
   const now = Date.now();
+  const bossI = G.bs && (G.ph === "play" || G.ph === "demo") ? G.bs[0] : -1;
   let wake = 0;
   for (let i=0;i<N;i++){
     const c = cards[i], o = own[i];
@@ -643,23 +733,38 @@ function renderBoard(){
     if (gone) wake = Math.max(wake, goneUntil[i] - now);
     if (spawning) wake = Math.max(wake, goneUntil[i] + 330 - now);
     const w = hideWords ? "" : (words[i] || "");
-    c.className = "card " + (hideWords || !okT(o) ? "n" : "t" + o) + (gone ? " gone" : spawning ? " spawn" : "");
-    c.textContent = gone ? (prevWordsShown[i] || "") : w;
+    c.className = "card " + (hideWords || !okT(o) ? "n" : "t" + o) + (gone ? " gone" : spawning ? " spawn" : "") + (clue && !hideWords ? " clue" : "");
+    const shown = gone ? (prevWordsShown[i] || "") : w;
+    if (clue && !hideWords){ c.textContent = ""; const s = document.createElement("span"); s.className = "ct"; s.textContent = shown; c.appendChild(s); }
+    else c.textContent = shown;
     if (!gone) prevWordsShown[i] = w;
-    if (gone) continue;
-    const item = hideWords ? "" : it[i];
-    if (item === "m" || item === "i"){ const b = document.createElement("span"); b.className = "badge " + item; b.textContent = item === "m" ? "미사일" : "먹물"; c.appendChild(b); }
-    if (typed && w && mine && o !== mine.t && G.ph === "play" && w.startsWith(typed)) c.classList.add("hint");
-    if (prevOwn && prevOwn[i] && own[i] && prevOwn[i] !== own[i] && !hideWords && !spawning){ void c.offsetWidth; c.classList.add("flip"); }
+    if (gone || hideWords) continue;
+    if ((G.sh || "").includes(o)) c.classList.add("shield");
+    const item = it[i];
+    if (ITEM_NAME[item]){ const b = document.createElement("span"); b.className = "badge " + item; b.textContent = ITEM_NAME[item]; c.appendChild(b); }
+    if (i === bossI){
+      c.classList.add("boss");
+      const b = document.createElement("span"); b.className = "badge b"; b.textContent = "보스"; c.appendChild(b);
+      const hits = G.bs[1] || {};
+      const n = mine ? (hits[mine.t] || 0) : Math.max(0, ...Object.values(hits));
+      const hp = document.createElement("span"); hp.className = "hp"; const bar = document.createElement("i"); bar.style.width = (n / BOSS_HP * 100) + "%"; hp.appendChild(bar); c.appendChild(hp);
+      const lab = document.createElement("span"); lab.className = "hpn"; lab.textContent = `${n}/${BOSS_HP}`; c.appendChild(lab);
+    }
+    if (typed && w && mine && (o !== mine.t || i === bossI) && G.ph === "play" && w.startsWith(typed)) c.classList.add("hint");
+    if (prevOwn && prevOwn[i] && own[i] && prevOwn[i] !== own[i] && !spawning){ void c.offsetWidth; c.classList.add("flip"); }
   }
   prevWords = words.slice();
   if (wake){ clearTimeout(renderBoard.t); renderBoard.t = setTimeout(renderBoard, wake + 10); }
   for (const f of fresh){
     if (mode === "player" && f[2] === me.sid && cards[f[0]]){
-      cards[f[0]].classList.add("mine"); floatAt(f[0], "+" + (f[4] || 10));
-      const now = Date.now(); combo = now - lastHitAt < 3500 ? combo + 1 : 1; lastHitAt = now;
+      const flag = f[5] || "", pts = f[4] | 0;
+      if (flag === "x"){ floatAt(f[0], "지뢰 " + pts, true); continue; }
+      if (flag === "b"){ floatAt(f[0], "보스 1타"); SFX.bossHit(); continue; }
+      cards[f[0]].classList.add("mine");
+      floatAt(f[0], flag === "c" ? "콤보 +" + pts : flag === "bw" ? "보스 처치 +" + pts : "+" + pts);
+      const t = Date.now(); combo = t - lastHitAt < 3500 ? combo + 1 : 1; lastHitAt = t;
       const cb = $("comboBox"); cb.classList.remove("hot"); void cb.offsetWidth; if (combo >= 3) cb.classList.add("hot");
-      SFX.hit();
+      if (flag === "c") SFX.combo(); else SFX.hit();
     }
   }
   $("board").classList.toggle("fever", G.ph === "play" && G.fv);
@@ -671,13 +776,14 @@ function shownTeams(){
   if ((G.ph === "play" || G.ph === "end" || G.ph === "demo") && G.act) return G.act.split("");
   return teamIds(G.nt || 2);
 }
+const roundTxt = () => G.rd && G.rd[1] > 1 ? `라운드 ${G.rd[0]}/${G.rd[1]} · ` : "";
 
 function renderTop(){
   const left = G.ph === "play" ? G.left : G.ph === "end" ? 0 : (G.dur || 120);
   $("timer").textContent = fmt(Math.max(0,left|0));
   $("timer").classList.toggle("low", G.ph === "play" && left <= 10);
   $("timer").classList.toggle("fever", G.ph === "play" && G.fv);
-  $("phase").textContent = ({demo:"미리보기", lobby:"대기실", ready:"곧 시작", play: G.fv ? "피버 타임" : "게임 중", end:"게임 종료"})[G.ph] || "";
+  $("phase").textContent = roundTxt() + (({demo:"미리보기", lobby:"대기실", ready:"곧 시작", play: G.fv ? "피버 타임" : "게임 중", end: G.rd[3] || G.rd[1] <= 1 ? "게임 종료" : "라운드 종료"})[G.ph] || "");
   const box = $("scores"); box.textContent = "";
   const byPts = G.ph === "play" || G.ph === "end" || G.ph === "demo";
   const ts = shownTeams();
@@ -691,7 +797,15 @@ function renderTop(){
     const a = document.createElement("span"); a.className = "nm"; a.textContent = TN[+t];
     const b = document.createElement("span"); b.className = "n"; b.textContent = vals[i];
     const u = document.createElement("span"); u.className = "u"; u.textContent = byPts ? `점 · 카드 ${count(G.own, t)}` : "명";
-    d.append(a, b, u); box.appendChild(d);
+    d.append(a, b, u);
+    if (G.rd[1] > 1){ const w = document.createElement("span"); w.className = "w"; w.textContent = "★".repeat(G.rd[2][+t] || 0) || "☆"; d.appendChild(w); }
+    if (G.ph === "play"){
+      const tag = txt => { const s = document.createElement("span"); s.className = "tag2"; s.textContent = txt; d.appendChild(s); };
+      if ((G.sh || "").includes(t)) tag("방패");
+      if ((G.fz || "").includes(t)) tag("얼음");
+      if (G.cb && G.cb[0] === t) tag("역전 x2");
+    }
+    box.appendChild(d);
   });
 }
 
@@ -707,16 +821,35 @@ function renderPv(){
   bar.classList.toggle("typing", mode === "player" && pvTyping($("typeIn").value));
 }
 
+function awards(ro, dur){
+  const mins = Math.max(.5, (dur || 60) / 60);
+  const best = f => { let b = null; for (const e of ro){ const v = f(e); if (v > 0 && (!b || v > b.v)) b = { e, v }; } return b; };
+  return [
+    ["최다 뒤집기", best(e => e.h), v => v + "장"],
+    ["최고 타수", best(e => Math.round(e.k / mins)), v => "분당 " + v + "타"],
+    ["정확도", best(e => e.a >= 5 ? Math.min(100, Math.round((e.h + e.b + e.p) / e.a * 100)) : 0), v => v + "%"],
+    ["미사일왕", best(e => e.m), v => v + "발"],
+    ["속담왕", best(e => e.p), v => v + "개"],
+    ["보스 사냥꾼", best(e => e.b), v => v + "타"],
+    ["지뢰 탐지기", best(e => e.mn), v => v + "번 밟음"]
+  ].filter(a => a[1]);
+}
+
 function renderOverlay(){
   const box = $("ovBox"); box.textContent = "";
   const add = (tag, cls, txt, parent = box) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; parent.appendChild(e); return e; };
   const rules = () => {
     const r = add("div", "rules");
     [["단어 뒤집기", "다른 팀 색 카드의 단어를 치면 우리 팀 카드가 됩니다. +10점"],
-     ["속담 찬스", "금색 속담을 먼저 완성하면 +100점, 상대 카드 3장을 뒤집습니다."],
-     ["미사일", "미사일 카드를 뒤집으면 1등 팀 카드 3장을 빼앗습니다."],
-     ["먹물", "먹물 카드를 뒤집으면 다른 팀 화면에 먹물이 뿌려집니다. 문질러 닦으세요."],
-     ["피버 타임", "마지막 10초는 모든 점수가 2배입니다."]]
+     ["속담 찬스", "금색 속담을 먼저 완성하면 +30점"],
+     ["보스 카드", "같은 팀이 보스 단어를 5번 맞히면 +40점, 카드도 차지합니다."],
+     ["미사일", "1등 팀 카드 3장을 빼앗습니다."],
+     ["먹물", "다른 팀 화면에 먹물을 뿌립니다. 문질러 닦으세요."],
+     ["얼음", "다른 팀 입력창을 3초 동안 얼립니다."],
+     ["방패", "5초 동안 우리 팀 카드를 지킵니다."],
+     ["지뢰", "어딘가 숨어 있는 함정 카드. 뒤집으면 -20점"],
+     ["콤보", "3초 안에 5번 연속 성공하면 +10점"],
+     ["역전 찬스·피버", "뒤처진 팀은 잠깐 점수 2배, 마지막 10초는 모두 2배"]]
       .forEach(([b, s]) => { const d = add("div", "", null, r); add("b", "", b, d); d.appendChild(document.createTextNode(s)); });
   };
   let show = true;
@@ -735,11 +868,21 @@ function renderOverlay(){
       rules();
     }
   } else if (G.ph === "ready"){
-    add("div", "big", String(Math.max(1, G.left|0))); add("p", "", "입력창에 손을 올리세요");
+    if (G.rd[1] > 1) add("p", "", `라운드 ${G.rd[0]} / ${G.rd[1]}`);
+    add("div", "big", String(Math.max(1, G.left|0)));
+    add("p", "", G.md === "clue" ? "카드에 나온 뜻을 보고 용어를 입력하세요" : "입력창에 손을 올리세요");
   } else if (G.ph === "end"){
-    const ts = shownTeams().map(t => ({ t, c:teamScore(t), k:count(G.own, t) })).sort((a,b) => b.c - a.c);
+    const ts = shownTeams().map(t => ({ t, c:teamScore(t), k:count(G.own, t), w:G.rd[2][+t] || 0 })).sort((a,b) => b.c - a.c);
     const winners = ts.filter(x => x.c === ts[0].c);
-    add("h2", "", winners.length > 1 ? "공동 1위 · " + winners.map(w => TN[+w.t]).join(", ") : TN[+winners[0].t] + " 팀 승리");
+    const multi = G.rd[1] > 1, over = !!G.rd[3];
+    if (multi && over){
+      const byW = ts.slice().sort((a,b) => b.w - a.w); const champs = byW.filter(x => x.w === byW[0].w);
+      add("h2", "", champs.length > 1 ? "최종 공동 우승 · " + champs.map(x => TN[+x.t]).join(", ") : `최종 우승 · ${TN[+champs[0].t]} 팀`);
+    } else if (multi){
+      add("h2", "", `라운드 ${G.rd[0]} 결과 · ` + (winners.length > 1 ? "무승부" : TN[+winners[0].t] + " 팀 승리"));
+    } else {
+      add("h2", "", winners.length > 1 ? "공동 1위 · " + winners.map(w => TN[+w.t]).join(", ") : TN[+winners[0].t] + " 팀 승리");
+    }
     const rk = add("div", "rank");
     ts.forEach(x => {
       const d = add("div", "chip t" + x.t + (x.c === ts[0].c ? " lead" : ""), null, rk);
@@ -747,12 +890,14 @@ function renderOverlay(){
       add("span", "nm", TN[+x.t], d);
       add("span", "n", String(x.c), d);
       add("span", "u", `점 · 카드 ${x.k}`, d);
+      if (multi) add("span", "w", "★".repeat(x.w) || "☆", d);
     });
-    const best = (G.ro||[]).filter(e => e.s > 0).sort((a,b) => b.s - a.s).slice(0,3);
-    if (best.length){
-      const m = add("div", "mvp");
-      best.forEach((e, i) => add("span", "", `${i+1}위 ${e.n} (${TN[+e.t]}) ${e.s}점`, m));
+    const aw = awards(G.ro || [], G.dur);
+    if (aw.length){
+      const grid = add("div", "awards");
+      aw.forEach(([title, b, f]) => { const d = add("div", "", null, grid); add("small", "", title, d); add("b", "", b.e.n, d); add("span", "", f(b.v), d); });
     }
+    if (multi && !over) add("p", "", "선생님이 다음 라운드를 시작하면 이어집니다.");
   } else show = false;
   $("overlay").hidden = !show;
 }
@@ -787,6 +932,22 @@ function renderRoster(){
   $("rosterCnt").textContent = `${ro.length} / ${G.mx || MAXP}`;
 }
 
+function cwRefresh(){
+  const l = $("selLang").value, show = l === "custom" || l === "clue";
+  $("cwField").hidden = !show;
+  if (!show) return;
+  const txt = $("customWords").value;
+  if (l === "custom"){
+    $("cwLabel").textContent = "단어 목록 (쉼표나 줄바꿈으로 구분)";
+    $("customWords").placeholder = "광합성, 엽록체, 기공, 증산 작용, 뿌리털, 물관, 체관, 양분";
+    const n = parseWords(txt).length; $("cwInfo").textContent = `단어 ${n}개 · 8개 이상 필요(20개 이상 권장)`; $("cwInfo").classList.toggle("warn", n < 8);
+  } else {
+    $("cwLabel").textContent = "용어 : 뜻 (한 줄에 하나씩)";
+    $("customWords").placeholder = "광합성 : 빛을 이용해 양분을 만드는 과정\n증산 작용 : 잎에서 물이 수증기로 빠져나가는 현상\n기공 : 잎 뒷면에 있는 작은 구멍";
+    const n = parseClues(txt).length; $("cwInfo").textContent = `용어 ${n}개 · 6개 이상 필요(15개 이상 권장) · 카드에는 뜻이 나오고 학생은 용어를 입력합니다.`; $("cwInfo").classList.toggle("warn", n < 6);
+  }
+}
+
 function renderPanels(){
   document.body.classList.toggle("as-player", mode === "player");
   $("pJoin").hidden = mode !== "join";
@@ -818,19 +979,26 @@ function renderPanels(){
     if (Date.now() - lastHitAt > 3500) combo = 0;
     $("myCombo").textContent = combo;
     const pm = $("pMsg"); pm.classList.remove("warn");
+    const inGame = G.ph === "play" || G.ph === "ready";
     if (!findHost()) pm.textContent = "진행자 화면과 연결이 끊겼습니다. 진행자 화면이 다시 열리면 자동으로 이어집니다.";
     else if (!e && (G.x||[]).includes(me.sid)){ pm.textContent = `정원(${G.mx}명)이 가득 찼습니다. 자리가 나면 자동으로 입장합니다.`; pm.classList.add("warn"); }
+    else if (!e && inGame && !G.lt){ pm.textContent = "지금은 게임 중이라 입장할 수 없습니다. 이번 판이 끝나면 자동으로 들어갑니다."; pm.classList.add("warn"); }
+    else if (e && !e.on && inGame){ pm.textContent = "선생님이 게임 중 입장을 꺼 두었습니다. 이번 판이 끝나면 다시 참가합니다."; pm.classList.add("warn"); }
     else if (!e) pm.textContent = "입장 확인 중입니다.";
     else if (G.ph === "lobby") pm.textContent = "입장 완료. 진행자가 시작하면 게임판이 열립니다.";
-    else if (G.ph === "play") pm.textContent = "";
-    else if (G.ph === "end") pm.textContent = "게임이 끝났습니다. 다음 판을 기다려 주세요.";
+    else if (G.ph === "play") pm.textContent = G.md === "clue" ? "카드의 뜻을 보고 용어를 입력한 뒤 Enter를 누르세요." : "";
+    else if (G.ph === "end"){
+      const mins = Math.max(.5, (G.dur || 60) / 60), acc = e.a ? Math.min(100, Math.round((e.h + e.b + e.p) / e.a * 100)) : 0;
+      pm.textContent = `내 기록 · ${e.s}점 · 뒤집기 ${e.h}장 · 분당 ${Math.round(e.k / mins)}타 · 정확도 ${acc}%` + (G.rd[1] > 1 && !G.rd[3] ? " · 다음 라운드를 기다려 주세요." : "");
+    }
     else pm.textContent = "";
     pm.hidden = !pm.textContent;
-    $("btnLeave").hidden = G.ph === "play" || G.ph === "ready";
-    const tb = $("typebar"); tb.hidden = false; tb.className = "typebar " + cls;
-    const playable = G.ph === "play" && !!e;
+    $("btnLeave").hidden = inGame;
+    const frozen = isFrozen();
+    const tb = $("typebar"); tb.hidden = false; tb.className = "typebar " + cls + (frozen && G.ph === "play" ? " frozen" : "");
+    const playable = G.ph === "play" && !!e && !!e.on && !frozen;
     $("typeIn").disabled = !playable;
-    $("typeIn").placeholder = playable ? "단어 입력 후 Enter" : "게임이 시작되면 입력할 수 있습니다";
+    $("typeIn").placeholder = frozen && G.ph === "play" ? "얼음! 잠시 입력할 수 없습니다" : playable ? (G.md === "clue" ? "뜻에 맞는 용어 입력 후 Enter" : "단어 입력 후 Enter") : "게임이 시작되면 입력할 수 있습니다";
   } else $("typebar").hidden = true;
 
   if (mode === "host"){
@@ -839,9 +1007,13 @@ function renderPanels(){
     $("netInfo").textContent = `방 코드 ${ROOM} · 중계 서버 ${Shim.brokers()}/${BROKERS.length}개 연결됨 · 접속 학생 ${(H.ro||[]).filter(e => e.on).length}명`;
     $("inviteUrl").textContent = isFile ? `방 코드 ${ROOM} · 지금은 파일로 열려 있어 학생이 접속할 수 없습니다. 웹사이트에 올린 주소로 여세요.` : inviteUrl();
     const idle = H.ph === "lobby" || H.ph === "end";
+    const cont = H.ph === "end" && H.rounds > 1 && !H.matchOver;
     $("btnStart").disabled = !idle;
+    $("btnStart").textContent = cont ? `라운드 ${H.rn + 1} 시작` : (H.ph === "end" ? "새 게임 시작" : "게임 시작");
     $("btnLobby").disabled = H.ph === "lobby";
-    for (const id of ["selDur","selLang","selMax","selTeams","btnShuffle"]) $(id).disabled = !idle;
+    for (const id of ["selDur","selLang","selMax","selTeams","btnShuffle","customWords"]) $(id).disabled = !idle;
+    $("selRounds").disabled = !idle || cont;
+    cwRefresh();
   }
 }
 
@@ -916,25 +1088,59 @@ $("ink").addEventListener("pointerdown", e => { wiping = true; wipe(e); });
 $("ink").addEventListener("pointermove", e => { if (wiping || e.pointerType === "mouse") wipe(e); });
 addEventListener("pointerup", () => { wiping = false; });
 
+function confetti(teams, big){
+  if (reduceMotion) return;
+  const cv = $("confetti"), dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; cv.hidden = false;
+  const ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+  const cs = getComputedStyle(document.documentElement);
+  const cols = (teams.length ? teams : ["0","1"]).map(t => cs.getPropertyValue("--t" + t).trim()).concat([cs.getPropertyValue("--gold").trim(), "#ffffff"]);
+  const P = Array.from({ length: big ? 220 : 120 }, () => ({ x: innerWidth/2 + (Math.random()-.5)*innerWidth*.3, y: innerHeight*.35, vx:(Math.random()-.5)*14, vy:-Math.random()*14-4, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.3, w:6+Math.random()*6, h:8+Math.random()*8, c:pick(cols) }));
+  const t0 = performance.now(), D = big ? 3800 : 2600;
+  (function step(t){
+    const k = t - t0; ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const p of P){ p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, 1 - k / D); ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore(); }
+    if (k < D) requestAnimationFrame(step); else { ctx.clearRect(0, 0, innerWidth, innerHeight); cv.hidden = true; }
+  })(t0);
+}
+
 function runEv(e){
   const [, type, t, sid, idxs, target] = e;
   const mine = myEntry();
+  const inMatch = mine && (G.act || "").includes(mine.t);
   if (type === "ink"){
     toast(`${TN[+t] || ""} 팀 먹물 공격!`, t); SFX.ink();
     document.querySelectorAll("#scores .chip").forEach(c => { if (c.dataset.t !== t){ c.classList.remove("hit"); void c.offsetWidth; c.classList.add("hit"); } });
-    if (mode === "player" && mine && mine.t !== t) inkSplash();
+    if (mode === "player" && inMatch && mine.t !== t) inkSplash();
   } else if (type === "mis"){
-    toast(`${TN[+t] || ""} 팀 미사일 발사 → ${TN[+target] || ""} 팀`, t); SFX.missile();
-    missileFly(t, idxs);
+    if (idxs && idxs.length){ toast(`${TN[+t] || ""} 팀 미사일 발사 → ${TN[+target] || ""} 팀`, t); SFX.missile(); missileFly(t, idxs); }
+    else toast("미사일이 방패에 막혔습니다", t);
+  } else if (type === "ice"){
+    toast(`${TN[+t] || ""} 팀 얼음 공격! 3초 동안 입력 정지`, t); SFX.ice();
+    if (mode === "player" && inMatch && mine.t !== t){ frozenUntil = Date.now() + 3000; setTimeout(render, 3050); }
+  } else if (type === "shield"){
+    toast(`${TN[+t] || ""} 팀 방패 5초!`, t); SFX.shield();
+  } else if (type === "mine"){
+    toast(`지뢰! ${nameOf(sid)} -${MINE_PTS}점`, t); SFX.mine(); boomAt(idxs);
+  } else if (type === "storm"){
+    toast("카드 폭풍! 카드가 뒤섞입니다", "g"); SFX.storm();
+  } else if (type === "boss"){
+    toast(`보스 등장! 같은 팀이 ${BOSS_HP}번 맞히면 +${BOSS_PTS}`, "g"); SFX.boss();
+  } else if (type === "bossw"){
+    toast(`${TN[+t] || ""} 팀 보스 처치! +${BOSS_PTS}`, t); SFX.win(); boomAt(idxs);
+  } else if (type === "bossx"){
+    toast("보스가 도망갔습니다", "g");
+  } else if (type === "cb"){
+    toast(`역전 찬스! ${TN[+t] || ""} 팀 10초 동안 점수 2배`, t); SFX.chance();
   } else if (type === "pv"){
-    toast(`속담 성공! ${nameOf(sid)} +100`, "g"); SFX.proverb();
-    setTimeout(() => boomAt(idxs), 150);
+    toast(`속담 성공! ${nameOf(sid)} +${(G.fv ? PV_PTS*2 : PV_PTS)}`, "g"); SFX.proverb();
   } else if (type === "pvon"){
-    toast("속담 찬스! 먼저 완성하면 +100", "g"); SFX.chance();
+    toast(`속담 찬스! 먼저 완성하면 +${PV_PTS}`, "g"); SFX.chance();
   } else if (type === "fv"){
     toast("피버 타임! 점수 2배", "g"); SFX.fever();
   } else if (type === "end"){
-    SFX.end();
+    const win = String(t || "").split("").filter(okT);
+    if (target === "1"){ SFX.win(); confetti(win, true); } else { SFX.end(); confetti(win, false); }
   }
 }
 function processEvents(){
@@ -966,6 +1172,7 @@ function onRoom(){
   if (g){
     if (G.ph !== "play" && g.ph === "play") combo = 0;
     if (G.ph === "ready" && g.ph === "ready" && g.left !== G.left) SFX.tick();
+    if (g.gid !== myStats.g){ myStats = { g:g.gid, a:0, k:0 }; if (mode === "player") setPresence({ st:{ ...myStats } }); }
     G = g;
   }
   else if (G.ph !== "demo"){ G = demoState(); prevOwn = ""; }
@@ -989,14 +1196,15 @@ function join(ev){
   ROOM = code;
   if (Shim.role() !== "student" || Shim.code() !== code) Shim.joinRoom(code);
   jm.classList.remove("warn"); joinWarnUntil = 0;
-  me = { sid, nm }; store.set("tf-me", me);
+  me = { sid, nm, room: ROOM, at: Date.now() }; store.set("tf-me", me);
   mode = "player"; myClaims = [];
-  setPresence({ role:"p", sid, nm, cl:[] });
+  setPresence({ role:"p", sid, nm, cl:[], st:{ ...myStats } });
   onRoom();
 }
 
 function leave(){
-  setPresence({ role:null, sid:null, nm:null, cl:null });
+  me.at = 0; store.set("tf-me", me);
+  setPresence({ role:null, sid:null, nm:null, cl:null, st:null });
   mode = "join"; $("typeIn").value = ""; onRoom();
 }
 
@@ -1010,48 +1218,60 @@ function feedback(txt, cls){
   const fb = $("fb"); fb.textContent = txt; fb.className = "fb " + cls;
   clearTimeout(fbTimer); fbTimer = setTimeout(() => { fb.textContent = ""; }, 1400);
 }
-function claim(c){ myN++; myClaims = myClaims.concat([[c[0], c[1], myN]]).slice(-6); setPresence({ cl: myClaims }); }
+function bump(w){ myStats.a++; myStats.k += strokes(w); }
+function claim(c){ myN++; myClaims = myClaims.concat([[c[0], c[1], myN]]).slice(-6); setPresence({ cl: myClaims, st:{ ...myStats } }); }
 function submitWord(){
   const inp = $("typeIn"); const w = inp.value.trim();
   if (!w || G.ph !== "play") return;
-  const e = myEntry(); if (!e) return;
+  const e = myEntry(); if (!e || !e.on) return;
+  if (isFrozen()){ feedback("얼음!", "no"); return; }
   const p = pvText();
-  if (p && norm(w) === norm(p)){ claim([-1, w]); inp.value = ""; feedback("속담 도전!", "gold"); renderPv(); return; }
-  const i = (G.words||[]).indexOf(w);
-  if (i < 0){
-    if (pvTyping(w)) { feedback("속담을 끝까지", "gold"); return; }
+  if (p && norm(w) === norm(p)){ bump(w); claim([-1, w]); inp.value = ""; feedback("속담 도전!", "gold"); renderPv(); return; }
+  if (G.md === "clue"){ bump(w); claim([-2, w]); inp.value = ""; feedback("제출!", "ok"); return; }
+  const idxs = []; (G.words || []).forEach((x, k) => { if (x === w) idxs.push(k); });
+  if (!idxs.length){
+    if (pvTyping(w)){ feedback("속담을 끝까지", "gold"); return; }
+    bump(w); setPresence({ st:{ ...myStats } });
     feedback("없는 단어", "no"); SFX.miss(); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); return;
   }
-  if (G.own[i] === e.t){ feedback("이미 우리 팀", "no"); inp.value = ""; renderBoard(); return; }
-  claim([i, w]);
-  inp.value = ""; feedback("뒤집기!", "ok"); renderBoard(); renderPv();
+  const bossI = G.bs && idxs.includes(G.bs[0]) ? G.bs[0] : -1;
+  const i = bossI >= 0 ? bossI : idxs.find(k => G.own[k] !== e.t && !(G.sh || "").includes(G.own[k]));
+  if (i === undefined){
+    bump(w); setPresence({ st:{ ...myStats } });
+    feedback(idxs.some(k => G.own[k] !== e.t) ? "방패 중" : "이미 우리 팀", "no"); inp.value = ""; renderBoard(); return;
+  }
+  bump(w); claim([i, w]);
+  inp.value = ""; feedback(bossI >= 0 ? "보스 공격!" : "뒤집기!", "ok"); renderBoard(); renderPv();
 }
 
 // ---------- host ----------
 function hostPublish(){
   const g = encode(H);
-  if (enc.encode(JSON.stringify(g)).length > 3700){ g.fx = g.fx.slice(-2); g.x = []; g.ev = g.ev.slice(-2); }
   setPresence({ role:"host", since:H.since, g });
   H.savedAt = Date.now(); store.set("tf-host", H);
-  G = H; render();
+  G = decode(g); render();
 }
 
-function drawWord(exclude){
+function buildPool(lang, cw){ return lang === "custom" ? parseWords(cw) : lang === "clue" ? parseClues(cw) : pool(lang); }
+const shownOf = k => H.clue ? H.pool[k][1] : H.pool[k];
+function drawEntry(){
   for (let tries=0; tries<400; tries++){
-    if (!bag.length) bag = shuffle(pool(H.lang));
-    const w = bag.pop();
-    if (!exclude.includes(w)) return w;
+    if (!bag.length) bag = shuffle(H.pool.map((_, k) => k));
+    const k = bag.pop();
+    if (!H.words.includes(shownOf(k))) return k;
   }
-  return pick(pool(H.lang));
+  return Math.floor(Math.random() * H.pool.length);
 }
+function fillCard(i){ const k = drawEntry(); H.words[i] = shownOf(k); if (H.clue) H.ans[i] = H.pool[k][0]; }
 function pushEv(type, t = "", sid = "", idxs = [], target = ""){
-  H.ek++; H.ev = H.ev.concat([[H.ek, type, t, sid, idxs, target]]).slice(-5);
+  H.ek++; H.ev = H.ev.concat([[H.ek, type, t, sid, idxs, target]]).slice(-6);
 }
 function setOwn(i, t){ H.own = H.own.slice(0,i) + t + H.own.slice(i+1); }
 function setIt(i, c){ H.it = H.it.slice(0,i) + c + H.it.slice(i+1); }
-function replaceCard(i){ H.words[i] = drawWord(H.words); setIt(i, "."); }
+function replaceCard(i){ fillCard(i); setIt(i, "."); }
 function stealCards(fromTeams, toTeam, n){
-  const idx = shuffle([...H.own].map((c, i) => fromTeams.includes(c) ? i : -1).filter(i => i >= 0)).slice(0, n);
+  const bi = H.boss ? H.boss.i : -1;
+  const idx = shuffle([...H.own].map((c, i) => fromTeams.includes(c) && i !== bi ? i : -1).filter(i => i >= 0)).slice(0, n);
   for (const i of idx){ setOwn(i, toTeam); replaceCard(i); }
   return idx;
 }
@@ -1078,17 +1298,91 @@ function hostStartAsHost(){
   const now = Date.now();
   if (saved && saved.v === V && now - (saved.savedAt || 0) < 3*3600*1000){
     H = saved;
-    if (H.ph === "play" && H.endAt <= now){ H.ph = "end"; H.pv = null; H.fv = false; }
+    if (H.ph === "play" && H.endAt <= now){ H.ph = "end"; H.pv = null; H.fv = false; H.boss = null; H.cb = null; }
     if (H.ph === "ready") H.ph = "lobby";
   }
-  else H = { v:V, ph:"lobby", dur:Number($("selDur").value), lang:$("selLang").value, nt:Number($("selTeams").value), mx:Number($("selMax").value),
-             act:"", n:30, left:0, words:[], own:"", it:"", ro:[], x:[], fx:[], ev:[], ek:0, bp:[], pv:null, fv:false, used:[], k:0 };
-  H.since = now; H.n = H.n || 30;
+  else H = { v:V, ph:"lobby", dur:Number($("selDur").value), lang:$("selLang").value, cw:$("customWords").value, nt:Number($("selTeams").value), mx:Number($("selMax").value),
+             rounds:Number($("selRounds").value), rn:0, wins:[], matchOver:false, gid:0,
+             act:"", n:36, late:true, left:0, words:[], ans:null, pool:[], clue:false, own:"", it:"", ro:[], x:[], fx:[], ev:[], ek:0, bp:[], pv:null, fv:false, used:[], k:0,
+             sh:{}, fz:{}, stk:{}, boss:null, cb:null };
+  H.since = now; H.n = SIZES.includes(H.n) ? H.n : 36;
+  H.sh = H.sh || {}; H.fz = H.fz || {}; H.stk = H.stk || {}; H.wins = H.wins || [];
   H.ro.forEach(e => { e.on = 0; });
   lastN = new Map(); bag = []; seenEk = -1;
   mode = "host"; prevOwn = "";
+  $("chkLate").checked = H.late !== false;
   $("selDur").value = String(H.dur); $("selLang").value = H.lang; $("selTeams").value = String(H.nt); $("selMax").value = String(H.mx);
+  $("selRounds").value = String(H.rounds || 1); if (typeof H.cw === "string" && H.cw) $("customWords").value = H.cw;
   hostSync(true);
+}
+
+function handleClaim(e, sid, i, w, now){
+  if ((H.fz[e.t] || 0) > now) return false;
+  const base = H.fv ? 2 : 1;
+  const mult = base * (H.cb && H.cb.t === e.t && H.cb.end > now ? 2 : 1);
+  const others = H.act.split("").filter(t => t !== e.t);
+  if (i === -1){
+    if (!H.pv || now > H.pv.end || norm(w) !== norm(PV[H.pv.i])) return false;
+    const pts = PV_PTS * base;
+    H.bp[+e.t] = (H.bp[+e.t] || 0) + pts; e.s += pts; e.p = (e.p|0) + 1;
+    H.pv = null; H.nextPv = now + 18000;
+    pushEv("pv", e.t, sid);
+    return true;
+  }
+  if (i === -2){
+    if (!H.clue) return false;
+    const nw = norm(w), cand = [];
+    for (let k=0; k<H.n; k++) if (H.ans[k] && norm(H.ans[k]) === nw) cand.push(k);
+    if (!cand.length) return false;
+    let k = cand.find(k => H.boss && H.boss.i === k);
+    if (k === undefined) k = cand.find(k => H.own[k] !== e.t && !((H.sh[H.own[k]] || 0) > now));
+    if (k === undefined) return false;
+    i = k;
+  } else if (!Number.isInteger(i) || i < 0 || i >= H.n || H.words[i] !== w) return false;
+
+  if (H.boss && H.boss.i === i){
+    const hits = H.boss.hits; hits[e.t] = (hits[e.t] || 0) + 1; e.b = (e.b|0) + 1; H.k++;
+    if (hits[e.t] >= BOSS_HP){
+      const pts = BOSS_PTS * base;
+      H.bp[+e.t] = (H.bp[+e.t] || 0) + pts; e.s += pts;
+      setOwn(i, e.t); replaceCard(i); H.boss = null;
+      H.fx = H.fx.concat([[i, e.t, sid, H.k, pts, "bw"]]).slice(-8);
+      pushEv("bossw", e.t, sid, [i]);
+    } else H.fx = H.fx.concat([[i, e.t, sid, H.k, 0, "b"]]).slice(-8);
+    return true;
+  }
+  if (H.own[i] === e.t) return false;
+  if ((H.sh[H.own[i]] || 0) > now) return false;
+  const item = H.it[i];
+  if (item === "x"){
+    H.bp[+e.t] = (H.bp[+e.t] || 0) - MINE_PTS; e.s -= MINE_PTS; e.mn = (e.mn|0) + 1;
+    replaceCard(i); H.k++;
+    H.fx = H.fx.concat([[i, e.t, sid, H.k, -MINE_PTS, "x"]]).slice(-8);
+    pushEv("mine", e.t, sid, [i]);
+    return true;
+  }
+  setOwn(i, e.t); replaceCard(i);
+  const st = H.stk[sid] || { t:0, n:0 }; st.n = now - st.t < 3000 ? st.n + 1 : 1; st.t = now; H.stk[sid] = st;
+  let pts = 10 * mult, flag = "";
+  if (st.n % 5 === 0){ pts += COMBO_PTS; flag = "c"; }
+  e.s += pts; e.h = (e.h|0) + 1;
+  H.bp[+e.t] = (H.bp[+e.t] || 0) + pts - 10;
+  H.k++; H.fx = H.fx.concat([[i, e.t, sid, H.k, pts, flag]]).slice(-8);
+  if (item === "i") pushEv("ink", e.t, sid);
+  if (item === "f"){ for (const t of others) H.fz[t] = now + 3000; pushEv("ice", e.t, sid); }
+  if (item === "s"){ H.sh[e.t] = now + 5000; pushEv("shield", e.t, sid); }
+  if (item === "m"){
+    const avail = others.filter(t => !((H.sh[t] || 0) > now));
+    if (avail.length){
+      const sc = avail.map(t => count(H.own, t)); const top = Math.max(...sc);
+      const target = pick(avail.filter((t, k) => sc[k] === top));
+      const idxs = stealCards([target], e.t, 3);
+      e.s += idxs.length * 10 * mult; e.m = (e.m|0) + 1;
+      H.bp[+e.t] += idxs.length * 10 * (mult - 1);
+      pushEv("mis", e.t, sid, idxs, target);
+    } else pushEv("mis", e.t, sid, [], "");
+  }
+  return true;
 }
 
 function hostSync(force){
@@ -1103,10 +1397,17 @@ function hostSync(force){
     if (!prev || pe.updatedAt > prev.updatedAt) present.set(p.sid, pe);
   }
   const safeName = s => { const n = clean(s, 10); return n && !isBad(n) ? n : "이름 없음"; };
+  const inGame = H.ph === "play" || H.ph === "ready";
+  const lateOk = !inGame || H.late !== false;
   for (const e of H.ro){
-    const pe = present.get(e.id); const on = pe ? 1 : 0;
+    const pe = present.get(e.id); let on = pe ? 1 : 0;
+    if (on && !e.on && !lateOk) on = 0;
     if (e.on !== on){ e.on = on; changed = true; }
-    if (pe){ const nm = safeName(pe.presence.nm); if (nm !== e.n){ e.n = nm; changed = true; } }
+    if (pe){
+      const nm = safeName(pe.presence.nm); if (nm !== e.n){ e.n = nm; changed = true; }
+      const st = pe.presence.st;
+      if (st && st.g === H.gid && (st.a|0) >= 0){ const a = Math.min(9999, st.a|0), k = Math.min(99999, st.k|0); if (a !== e.a || k !== e.k){ e.a = a; e.k = k; changed = true; } }
+    }
   }
   if (H.ph === "lobby"){
     const before = H.ro.length; H.ro = H.ro.filter(e => e.on);
@@ -1117,8 +1418,9 @@ function hostSync(force){
   const x = [];
   for (const [sid, pe] of present){
     if (H.ro.some(e => e.id === sid)) continue;
+    if (!lateOk) continue;
     if (H.ro.length >= H.mx){ x.push(sid); continue; }
-    H.ro.push({ id:sid, n:safeName(pe.presence.nm), t:pickTeam(), s:0, on:1 });
+    H.ro.push({ id:sid, n:safeName(pe.presence.nm), t:pickTeam(), s:0, on:1, h:0, m:0, p:0, b:0, a:0, k:0, mn:0 });
     changed = true;
   }
   if (JSON.stringify(x) !== JSON.stringify(H.x)){ H.x = x; changed = true; }
@@ -1134,38 +1436,12 @@ function hostSync(force){
       last = n;
       if (H.ph !== "play") continue;
       const e = H.ro.find(r => r.id === sid);
-      if (!e || typeof w !== "string") continue;
-      const mult = H.fv ? 2 : 1;
-      const others = H.act.split("").filter(t => t !== e.t);
-      if (i === -1){
-        if (!H.pv || now > H.pv.end || norm(w) !== norm(PV[H.pv.i])) continue;
-        const idxs = stealCards(others, e.t, 3);
-        const pts = 100 * mult;
-        H.bp[+e.t] = (H.bp[+e.t] || 0) + pts; e.s += pts;
-        H.pv = null; H.nextPv = now + 18000;
-        pushEv("pv", e.t, sid, idxs);
-        changed = true; continue;
-      }
-      if (!Number.isInteger(i) || i < 0 || i >= H.n) continue;
-      if (H.words[i] !== w || H.own[i] === e.t) continue;
-      const item = H.it[i];
-      setOwn(i, e.t); replaceCard(i);
-      const pts = 10 * mult; e.s += pts; H.k++;
-      H.fx = H.fx.concat([[i, e.t, sid, H.k, pts]]).slice(-6);
-      if (item === "i") pushEv("ink", e.t, sid);
-      if (item === "m" && others.length){
-        const sc = others.map(t => count(H.own, t));
-        const top = Math.max(...sc);
-        const target = pick(others.filter((t, k) => sc[k] === top));
-        const idxs = stealCards([target], e.t, 3);
-        e.s += idxs.length * 10 * mult;
-        pushEv("mis", e.t, sid, idxs, target);
-      }
-      changed = true;
+      if (!e || !e.on || typeof w !== "string" || w.length > 80) continue;
+      if (handleClaim(e, sid, i, w, now)) changed = true;
     }
     lastN.set(pe.peer, last);
   }
-  if (changed) hostPublish(); else { G = H; }
+  if (changed) hostPublish();
 }
 
 function hostMove(sid, t){
@@ -1174,45 +1450,93 @@ function hostMove(sid, t){
 }
 
 function pickPv(){
-  const [a, b] = pvRange(H.lang);
+  const [a, b] = pvRange(H.lang === "en" ? "en" : H.lang === "mix" ? "mix" : "ko");
   const all = Array.from({length:b-a}, (_, k) => a + k);
   let cand = all.filter(i => !H.used.includes(i));
   if (!cand.length){ H.used = []; cand = all; }
   const i = pick(cand); H.used.push(i); return i;
 }
 function placeItem(){
-  const free = []; for (let i=0;i<H.n;i++) if (H.it[i] === ".") free.push(i);
+  const bi = H.boss ? H.boss.i : -1;
+  const free = []; for (let i=0;i<H.n;i++) if (H.it[i] === "." && i !== bi) free.push(i);
   if (!free.length) return;
-  setIt(pick(free), Math.random() < .5 ? "m" : "i");
+  const r = Math.random();
+  setIt(pick(free), r < .25 ? "m" : r < .48 ? "i" : r < .66 ? "f" : r < .82 ? "s" : "x");
 }
 const itemCount = () => [...H.it].filter(c => c !== ".").length;
 
+function spawnBoss(now){
+  const free = []; for (let i=0;i<H.n;i++) if (H.it[i] === ".") free.push(i);
+  if (!free.length) return;
+  const i = pick(free);
+  if (!H.clue){
+    const longs = H.pool.filter(w => [...w].length >= 4 && !H.words.includes(w));
+    if (longs.length) H.words[i] = pick(longs);
+  }
+  H.boss = { i, hits:{}, end: now + 25000 };
+  pushEv("boss", "", "", [i]);
+}
+function storm(){
+  const perm = shuffle([...Array(H.n).keys()]);
+  const w = [], a = [], o = [], it = [];
+  perm.forEach((p, k) => { w[k] = H.words[p]; if (H.ans) a[k] = H.ans[p]; o[k] = H.own[p]; it[k] = H.it[p]; });
+  H.words = w; if (H.ans) H.ans = a; H.own = o.join(""); H.it = it.join("");
+  if (H.boss) H.boss.i = perm.indexOf(H.boss.i);
+  pushEv("storm");
+}
+
 function hostStart(){
   if (!H.ro.length){ $("hMsg").textContent = "참가자가 한 명 이상 입장해야 시작할 수 있습니다."; return; }
-  H.dur = Number($("selDur").value); H.lang = $("selLang").value;
+  const cont = H.ph === "end" && H.rounds > 1 && !H.matchOver;
+  const lang = $("selLang").value, cw = $("customWords").value;
+  const pl = buildPool(lang, cw);
+  if (lang === "custom" && pl.length < 8){ $("hMsg").textContent = "직접 입력한 단어가 8개 이상 있어야 시작할 수 있습니다."; return; }
+  if (lang === "clue" && pl.length < 6){ $("hMsg").textContent = "'용어 : 뜻' 줄이 6개 이상 있어야 시작할 수 있습니다."; return; }
+  if (!cont){ H.rounds = Number($("selRounds").value); H.rn = 1; H.wins = Array(H.nt).fill(0); H.matchOver = false; }
+  else H.rn++;
+  H.dur = Number($("selDur").value); H.lang = lang; H.cw = cw; H.pool = pl; H.clue = lang === "clue";
   let act = teamIds(H.nt).filter(t => H.ro.some(e => e.t === t));
   for (const t of teamIds(H.nt)){ if (act.length >= 2) break; if (!act.includes(t)) act.push(t); }
   act.sort();
   H.act = act.join("");
-  bag = shuffle(pool(H.lang));
+  bag = [];
   H.n = sizeFor(H.ro.length);
-  H.words = []; for (let i=0;i<H.n;i++) H.words.push(drawWord(H.words));
+  H.words = Array(H.n).fill(""); H.ans = H.clue ? Array(H.n).fill("") : null;
+  for (let i=0;i<H.n;i++) fillCard(i);
   const order = shuffle(act);
   H.own = shuffle(Array.from({length:H.n}, (_, i) => order[i % order.length])).join("");
-  H.it = ".".repeat(H.n); for (let k=0;k<Math.round(H.n/15);k++) placeItem();
+  H.boss = null;
+  H.it = ".".repeat(H.n); for (let k=0;k<Math.round(H.n/12);k++) placeItem();
   H.bp = Array(H.nt).fill(0);
-  H.ro.forEach(e => { e.s = 0; });
+  H.ro.forEach(e => { e.s = 0; e.h = 0; e.m = 0; e.p = 0; e.b = 0; e.a = 0; e.k = 0; e.mn = 0; });
   H.fx = []; H.k = 0; H.pv = null; H.fv = false; H.used = H.used || [];
+  H.sh = {}; H.fz = {}; H.stk = {}; H.cb = null; H.didBoss = false; H.didStorm = false; H.didCb = false;
+  H.gid = (H.gid|0) + 1;
   H.ph = "ready"; H.left = 3; H.readyAt = Date.now() + 3000;
   lastN = new Map(room.peers().map(p => [p.peer, Math.max(0, ...((p.presence?.cl)||[]).map(c => (Array.isArray(c) && c[2]) || 0))]));
   const empty = H.nt - teamIds(H.nt).filter(t => H.ro.some(e => e.t === t)).length;
-  $("hMsg").textContent = empty > 0 ? `참가자가 없는 ${empty}개 팀은 빼고 시작합니다.` : "게임이 시작됩니다.";
+  $("hMsg").textContent = (H.rounds > 1 ? `라운드 ${H.rn} / ${H.rounds} 시작. ` : "") + (empty > 0 ? `참가자가 없는 ${empty}개 팀은 빼고 시작합니다.` : "게임이 시작됩니다.");
+  hostPublish();
+}
+
+function endRound(){
+  H.ph = "end"; H.left = 0; H.pv = null; H.fv = false; H.boss = null; H.cb = null; H.sh = {}; H.fz = {};
+  const ts = H.act.split("");
+  const sc = ts.map(t => count(H.own, t) * 10 + (H.bp[+t] || 0));
+  const top = Math.max(...sc);
+  const winners = ts.filter((t, k) => sc[k] === top);
+  if (winners.length === 1) H.wins[+winners[0]] = (H.wins[+winners[0]] || 0) + 1;
+  const need = Math.ceil((H.rounds || 1) / 2);
+  H.matchOver = (H.rounds || 1) <= 1 || H.wins.some(w => w >= need) || H.rn >= H.rounds;
+  pushEv("end", winners.join(""), "", [], H.matchOver ? "1" : "");
+  $("hMsg").textContent = H.matchOver ? "게임이 끝났습니다." : `라운드 ${H.rn} 종료. '라운드 ${H.rn + 1} 시작'을 누르면 이어집니다.`;
   hostPublish();
 }
 
 function hostLobby(){
-  H.ph = "lobby"; H.words = []; H.own = ""; H.it = ""; H.fx = []; H.k = 0; H.left = 0; H.act = ""; H.pv = null; H.fv = false;
-  H.ro.forEach(e => { e.s = 0; });
+  H.ph = "lobby"; H.words = []; H.ans = null; H.own = ""; H.it = ""; H.fx = []; H.k = 0; H.left = 0; H.act = ""; H.pv = null; H.fv = false;
+  H.boss = null; H.cb = null; H.sh = {}; H.fz = {}; H.rn = 0; H.wins = []; H.matchOver = false;
+  H.ro.forEach(e => { e.s = 0; e.h = 0; e.m = 0; e.p = 0; e.b = 0; e.a = 0; e.k = 0; e.mn = 0; });
   $("hMsg").textContent = "참가자 옆 목록에서 팀을 바꿀 수 있습니다.";
   hostSync(true);
 }
@@ -1224,18 +1548,31 @@ function hostTick(){
     const l = Math.ceil((H.readyAt - now)/1000);
     if (l <= 0){
       H.ph = "play"; H.endAt = now + H.dur*1000; H.left = H.dur;
-      H.nextIt = now + 6000; H.nextPv = now + Math.min(15000, H.dur*1000/4);
+      H.nextIt = now + 5000; H.nextPv = now + Math.min(15000, H.dur*1000/4);
       hostPublish();
     } else if (l !== H.left){ H.left = l; SFX.tick(); hostPublish(); }
   } else if (H.ph === "play"){
     const l = Math.max(0, Math.ceil((H.endAt - now)/1000));
-    if (l <= 0){ H.ph = "end"; H.left = 0; H.pv = null; H.fv = false; pushEv("end"); hostPublish(); return; }
+    if (l <= 0){ endRound(); return; }
     let ch = l !== H.left; H.left = l;
+    const f = (H.dur - l) / H.dur;
     const fv = l <= 10;
     if (fv !== H.fv){ H.fv = fv; if (fv) pushEv("fv"); ch = true; }
-    if (now >= H.nextIt){ H.nextIt = now + 5000 + Math.random()*4000; if (itemCount() < Math.round(H.n/10)){ placeItem(); ch = true; } }
-    if (H.pv && now >= H.pv.end){ H.pv = null; H.nextPv = now + 12000; ch = true; }
-    if (!H.pv && now >= H.nextPv && l > 14){ H.pv = { i:pickPv(), end: now + 15000 }; pushEv("pvon"); ch = true; }
+    if (now >= H.nextIt){ H.nextIt = now + 4000 + Math.random()*4000; if (itemCount() < Math.round(H.n/9)){ placeItem(); ch = true; } }
+    if (!H.clue){
+      if (H.pv && now >= H.pv.end){ H.pv = null; H.nextPv = now + 12000; ch = true; }
+      if (!H.pv && now >= H.nextPv && l > 14){ H.pv = { i:pickPv(), end: now + 15000 }; pushEv("pvon"); ch = true; }
+    }
+    if (!H.didBoss && f >= .3 && l > 20){ H.didBoss = true; spawnBoss(now); ch = true; }
+    if (H.boss && now >= H.boss.end){ H.boss = null; pushEv("bossx"); ch = true; }
+    if (!H.didStorm && f >= .5 && l > 12){ H.didStorm = true; storm(); ch = true; }
+    if (!H.didCb && f >= .6 && l > 12){
+      H.didCb = true;
+      const ts = H.act.split(""); const sc = ts.map(t => count(H.own, t) * 10 + (H.bp[+t] || 0));
+      const lo = Math.min(...sc), hi = Math.max(...sc);
+      if (hi - lo >= 30){ const t = ts[sc.indexOf(lo)]; H.cb = { t, end: now + 10000 }; pushEv("cb", t); ch = true; }
+    }
+    if (H.cb && now >= H.cb.end){ H.cb = null; ch = true; }
     if (ch) hostPublish();
   }
 }
@@ -1262,8 +1599,13 @@ $("btnCopy").onclick = () => {
 };
 $("btnSnd").onclick = () => { soundOn = !soundOn; store.set("tf-snd", soundOn); if (soundOn) ensureAudio(); renderSnd(); };
 $("btnShuffle").onclick = () => { if (!H) return; reshuffle(); $("hMsg").textContent = "팀을 무작위로 다시 나눴습니다."; hostPublish(); };
+$("chkLate").onchange = () => {
+  if (!H) return; H.late = $("chkLate").checked;
+  $("hMsg").textContent = H.late ? "게임 중에도 입장할 수 있습니다. 튕긴 학생은 점수를 그대로 가지고 돌아옵니다." : "게임 중 입장을 막았습니다. 이번 판이 끝나면 다시 들어올 수 있습니다.";
+  hostSync(true);
+};
 $("selTeams").onchange = () => {
-  if (!H) return; H.nt = Number($("selTeams").value); reshuffle();
+  if (!H) return; H.nt = Number($("selTeams").value); reshuffle(); H.wins = []; H.matchOver = true;
   $("hMsg").textContent = `${H.nt}팀으로 무작위 배정했습니다.`; hostPublish();
 };
 $("selMax").onchange = () => {
@@ -1271,10 +1613,19 @@ $("selMax").onchange = () => {
   $("hMsg").textContent = `최대 인원을 ${H.mx}명으로 바꿨습니다.`; hostSync(true);
 };
 $("selDur").onchange = () => { if (!H) return; H.dur = Number($("selDur").value); hostPublish(); };
-$("selLang").onchange = () => { if (!H) return; H.lang = $("selLang").value; hostPublish(); };
+$("selLang").onchange = () => { cwRefresh(); if (!H) return; H.lang = $("selLang").value; hostPublish(); };
+$("selRounds").onchange = () => { if (!H) return; H.rounds = Number($("selRounds").value); hostPublish(); };
+$("customWords").addEventListener("input", () => { store.set("tf-cw", $("customWords").value); if (H) H.cw = $("customWords").value; cwRefresh(); });
 
 const ti = $("typeIn");
 const isWord = v => (G.words || []).includes(v.trim());
+const spaceSubmits = v => {
+  if (G.md === "clue") return false;
+  if (pvTyping(v) && !isWord(v)) return false;
+  const t = v.trim();
+  if (!isWord(t) && (G.words || []).some(w => w.startsWith(t + " "))) return false;
+  return true;
+};
 ti.addEventListener("keydown", e => {
   ensureAudio();
   if (e.key === "Enter"){
@@ -1283,7 +1634,7 @@ ti.addEventListener("keydown", e => {
     submitWord(); return;
   }
   if (e.key === " " || e.code === "Space"){
-    if (pvTyping(ti.value) && !isWord(ti.value)) return;   // 속담은 띄어쓰기 허용
+    if (!spaceSubmits(ti.value)) return;
     e.preventDefault();
     if (e.isComposing || e.keyCode === 229){ pendingSubmit = true; return; }
     submitWord();
@@ -1291,12 +1642,13 @@ ti.addEventListener("keydown", e => {
 });
 ti.addEventListener("compositionend", () => { if (pendingSubmit){ pendingSubmit = false; setTimeout(submitWord, 0); } });
 ti.addEventListener("input", () => {
-  if (/\s$/.test(ti.value) && !(pvTyping(ti.value) && !isWord(ti.value))){ ti.value = ti.value.trim(); submitWord(); }
+  if (/\s$/.test(ti.value) && spaceSubmits(ti.value)){ ti.value = ti.value.trim(); submitWord(); }
   else { renderBoard(); renderPv(); }
 });
 
 setInterval(hostTick, 200);
 setInterval(() => { if (mode === "player" && combo && Date.now() - lastHitAt > 3500){ combo = 0; $("myCombo").textContent = 0; } }, 500);
+if (location.hostname === "127.0.0.1") window.__tf = { get H(){ return H; }, get G(){ return G; }, hostPublish };
 renderSnd();
 render();
 
@@ -1308,10 +1660,14 @@ room.onConnection(c => {
   render();
 });
 room.onPeers(() => onRoom());
-if (URL_ROOM) Shim.joinRoom(URL_ROOM);
+if (URL_ROOM){
+  Shim.joinRoom(URL_ROOM);
+  if (me.sid && me.nm && me.room === URL_ROOM && Date.now() - (me.at || 0) < 3*3600*1000) join({ preventDefault(){} });
+}
 else { const sv = store.get("tf-host"); if (sv && sv.v === V && store.get("tf-code") && Date.now() - (sv.savedAt || 0) < 3*3600*1000) hostStartAsHost(); }
 render();
 })();
 </script>
+<canvas id="confetti" aria-hidden="true" hidden></canvas>
 </body>
 </html>

@@ -164,10 +164,18 @@ button{cursor:pointer}
 .team ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .team li{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:.85rem;padding:4px 8px;border-radius:7px;
   background:color-mix(in srgb,var(--tc) 14%,var(--bg));border-left:3px solid var(--tc);min-width:0}
-.team li .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team li .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25}
+.team li .who small{display:block;font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .team li .s{font-variant-numeric:tabular-nums;font-weight:700}
 .team li select{font-size:.75rem;padding:1px 2px;border:1px solid var(--line);border-radius:5px;background:var(--surface);max-width:5.2em}
 .team li.off{opacity:.45}
+.team li .kick{flex:none;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font-size:.72rem;padding:2px 7px;line-height:1.3}
+.team li .kick:hover{color:var(--ink);border-color:var(--muted)}
+.team li .kick[data-arm]{color:#fff;background:var(--t0);border-color:var(--t0)}
+.btn.small{padding:7px 10px;font-size:.85rem}
+.kickbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.kickbox .kk{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.kickbox .kk button{border:0;border-radius:999px;background:var(--ok);color:var(--bg);font-size:.72rem;padding:2px 8px}
 .team li.empty{background:transparent;border:1px dashed var(--line);color:var(--muted)}
 
 /* student HUD */
@@ -330,12 +338,17 @@ button{cursor:pointer}
         </div>
         <p id="hMsg" class="msg">참가자 옆 목록에서 팀을 바꿀 수 있습니다.</p>
         <p id="netInfo" class="msg"></p>
-        <button type="button" id="btnHostOff" class="btn ghost">게임방 닫기</button>
+        <div class="row">
+          <button type="button" id="btnNewCode" class="btn ghost">방 코드 새로 받기</button>
+          <button type="button" id="btnHostOff" class="btn ghost">게임방 닫기</button>
+        </div>
       </section>
 
       <section id="pRoster" class="panel">
         <h3><span>참가자</span><span id="rosterCnt" class="msg">0 / 30</span></h3>
+        <button type="button" id="btnKickOff" class="btn ghost small" hidden>끊긴 학생 모두 빼기</button>
         <div id="teams" class="teams"></div>
+        <div id="kickBox" class="kickbox" hidden></div>
       </section>
     </aside>
   </main>
@@ -508,7 +521,7 @@ const Shim = (() => {
   }
   function queueSend(){
     if (sendTimer) return;
-    const wait = Math.max(0, 140 - (Date.now() - lastSend));
+    const wait = Math.max(0, (role === "host" ? 60 : 20) - (Date.now() - lastSend));
     sendTimer = setTimeout(() => { sendTimer = 0; sendNow(); }, wait);
   }
   function presence(patch){
@@ -596,6 +609,7 @@ let combo = 0, lastHitAt = 0, frozenUntil = 0;
 const FEATS = [["m","미사일"],["i","먹물"],["f","얼음"],["s","방패"],["x","지뢰"],["boss","보스 카드"],["storm","카드 폭풍"],["cb","역전 찬스"],["pv","속담 찬스"],["combo","콤보 보너스"],["fever","피버 타임"]];
 let featPref = store.get("tf-feat") || {};
 const feat = k => { const f = (H && H.feat) || featPref; return f[k] !== false; };
+const RESUME_MS = 10 * 60 * 1000;   // 선생님 화면이 닫힌 뒤 10분 안에 다시 열면 같은 방으로 이어하기
 const BOSS_HP = 5, BOSS_PTS = 40, PV_PTS = 30, MINE_PTS = 20, COMBO_PTS = 10;
 const ITEM_NAME = { m:"미사일", i:"먹물", f:"얼음", s:"방패" };
 
@@ -685,7 +699,7 @@ function encode(S){
     sh:live(S.sh), fz:live(S.fz),
     bs:S.boss ? [S.boss.i, S.boss.hits, Math.max(0, Math.ceil((S.boss.end - now)/1000))] : null,
     cb:S.cb && S.cb.end > now ? [S.cb.t, Math.ceil((S.cb.end - now)/1000)] : null,
-    rd:[S.rn || 1, S.rounds || 1, S.wins || [], S.matchOver ? 1 : 0], gid:S.gid|0, off:FEATS.map(f => f[0]).filter(k => S.feat && S.feat[k] === false) };
+    rd:[S.rn || 1, S.rounds || 1, S.wins || [], S.matchOver ? 1 : 0], gid:S.gid|0, kk:(S.kick || []).map(k => k.id).slice(0, 40), off:FEATS.map(f => f[0]).filter(k => S.feat && S.feat[k] === false) };
 }
 function decode(g){
   if (!g || g.v !== V || !Array.isArray(g.words) || !Array.isArray(g.ro)) return null;
@@ -703,7 +717,7 @@ function decode(g){
     bs:Array.isArray(g.bs) && Number.isInteger(g.bs[0]) ? [g.bs[0], hits(g.bs[1]), g.bs[2]|0] : null,
     cb:Array.isArray(g.cb) && okT(g.cb[0]) ? [g.cb[0], g.cb[1]|0] : null,
     rd:Array.isArray(g.rd) ? [g.rd[0]|0 || 1, g.rd[1]|0 || 1, Array.isArray(g.rd[2]) ? g.rd[2].map(n => n|0) : [], g.rd[3] ? 1 : 0] : [1,1,[],0],
-    gid:g.gid|0, off:Array.isArray(g.off) ? g.off.filter(k => typeof k === "string").slice(0, 20) : [] };
+    gid:g.gid|0, kk:Array.isArray(g.kk) ? g.kk.filter(k => typeof k === "string").slice(0, 40) : [], off:Array.isArray(g.off) ? g.off.filter(k => typeof k === "string").slice(0, 20) : [] };
 }
 const pvText = () => G.pv ? PV[G.pv.i] : "";
 const pvLeft = () => G.pv ? G.pv.left : 0;
@@ -729,61 +743,89 @@ function floatAt(i, txt, bad){
   $("board").parentElement.appendChild(f); setTimeout(() => f.remove(), 950);
 }
 
+let cardKey = [];            // 카드별 마지막 모습 (바뀐 카드만 다시 그림)
+let pend = {};               // 내가 맞혀서 먼저 뒤집어 둔 카드 (선생님 화면 확정 전)
+let optFloat = {};           // 먼저 띄운 점수 표시 (확정 때 중복 방지)
 function renderBoard(){
   const own = G.own || "", words = G.words || [], it = G.it || "";
   const mine = myEntry();
   const clue = G.md === "clue";
-  const typed = mode === "player" && !clue ? $("typeIn").value.trim() : "";
   const hideWords = G.ph === "lobby" || G.ph === "ready";
+  if (cards.length !== (G.n || 36)) cardKey = [];
   ensureCards(G.n || 36);
   const fresh = (G.fx || []).filter(f => f[3] > prevK);
   const now = Date.now();
   const bossI = G.bs && (G.ph === "play" || G.ph === "demo") ? G.bs[0] : -1;
+  const hits = bossI >= 0 ? (G.bs[1] || {}) : null;
   let wake = 0;
   for (let i=0;i<N;i++){
-    const c = cards[i], o = own[i];
+    const c = cards[i];
+    // 먼저 뒤집어 둔 카드: 단어가 바뀌었거나(확정/다른 팀) 1.5초가 지나면 원래대로
+    const pd = pend[i];
+    if (pd && (words[i] !== pd.w || now - pd.at > 1500 || G.ph !== "play")) delete pend[i];
+    const o = pend[i] ? pend[i].t : own[i];
     if (!hideWords && G.ph !== "demo" && prevWords[i] && words[i] && prevWords[i] !== words[i] && !reduceMotion) goneUntil[i] = now + GONE_MS;
     const gone = (goneUntil[i] || 0) > now;
     const spawning = !gone && (goneUntil[i] || 0) + 320 > now;
     if (gone) wake = Math.max(wake, goneUntil[i] - now);
     if (spawning) wake = Math.max(wake, goneUntil[i] + 330 - now);
+    if (pend[i]) wake = Math.max(wake, 1500 - (now - pend[i].at) + 20);
     const w = hideWords ? "" : (words[i] || "");
-    c.className = "card " + (hideWords || !okT(o) ? "n" : "t" + o) + (gone ? " gone" : spawning ? " spawn" : "") + (clue && !hideWords ? " clue" : "");
     const shown = gone ? (prevWordsShown[i] || "") : w;
-    if (clue && !hideWords){ c.textContent = ""; const s = document.createElement("span"); s.className = "ct"; s.textContent = shown; c.appendChild(s); }
-    else c.textContent = shown;
     if (!gone) prevWordsShown[i] = w;
-    if (gone || hideWords) continue;
-    if ((G.sh || "").includes(o)) c.classList.add("shield");
-    const item = it[i];
-    if (ITEM_NAME[item]){ const b = document.createElement("span"); b.className = "badge " + item; b.textContent = ITEM_NAME[item]; c.appendChild(b); }
-    if (i === bossI){
-      c.classList.add("boss");
-      const b = document.createElement("span"); b.className = "badge b"; b.textContent = "보스"; c.appendChild(b);
-      const hits = G.bs[1] || {};
-      const n = mine ? (hits[mine.t] || 0) : Math.max(0, ...Object.values(hits));
-      const hp = document.createElement("span"); hp.className = "hp"; const bar = document.createElement("i"); bar.style.width = (n / BOSS_HP * 100) + "%"; hp.appendChild(bar); c.appendChild(hp);
-      const lab = document.createElement("span"); lab.className = "hpn"; lab.textContent = `${n}/${BOSS_HP}`; c.appendChild(lab);
+    const item = gone || hideWords ? "" : it[i];
+    const isBoss = !gone && !hideWords && i === bossI;
+    const bn = isBoss ? (mine ? (hits[mine.t] || 0) : Math.max(0, ...Object.values(hits))) : 0;
+    const shielded = !gone && !hideWords && (G.sh || "").includes(o);
+    const flipNow = prevOwn && prevOwn[i] && o && prevOwn[i] !== o && !hideWords && !spawning && !gone;
+    const cls = "card " + (hideWords || !okT(o) ? "n" : "t" + o) + (gone ? " gone" : spawning ? " spawn" : "") + (clue && !hideWords ? " clue" : "")
+      + (shielded ? " shield" : "") + (isBoss ? " boss" : "");
+    const key = cls + "|" + shown + "|" + (ITEM_NAME[item] ? item : "") + "|" + (isBoss ? bn : "");
+    if (key !== cardKey[i] || flipNow){
+      cardKey[i] = key;
+      c.className = cls;
+      if (clue && !hideWords){ c.textContent = ""; const sp = document.createElement("span"); sp.className = "ct"; sp.textContent = shown; c.appendChild(sp); }
+      else c.textContent = shown;
+      if (ITEM_NAME[item]){ const b = document.createElement("span"); b.className = "badge " + item; b.textContent = ITEM_NAME[item]; c.appendChild(b); }
+      if (isBoss){
+        const b = document.createElement("span"); b.className = "badge b"; b.textContent = "보스"; c.appendChild(b);
+        const hp = document.createElement("span"); hp.className = "hp"; const bar = document.createElement("i"); bar.style.width = (bn / BOSS_HP * 100) + "%"; hp.appendChild(bar); c.appendChild(hp);
+        const lab = document.createElement("span"); lab.className = "hpn"; lab.textContent = `${bn}/${BOSS_HP}`; c.appendChild(lab);
+      }
+      if (flipNow){ void c.offsetWidth; c.classList.add("flip"); }
     }
-    if (typed && w && mine && (o !== mine.t || i === bossI) && G.ph === "play" && w.startsWith(typed)) c.classList.add("hint");
-    if (prevOwn && prevOwn[i] && own[i] && prevOwn[i] !== own[i] && !spawning){ void c.offsetWidth; c.classList.add("flip"); }
   }
   prevWords = words.slice();
   if (wake){ clearTimeout(renderBoard.t); renderBoard.t = setTimeout(renderBoard, wake + 10); }
   for (const f of fresh){
     if (mode === "player" && f[2] === me.sid && cards[f[0]]){
       const flag = f[5] || "", pts = f[4] | 0;
-      if (flag === "x"){ floatAt(f[0], "지뢰 " + pts, true); continue; }
-      if (flag === "b"){ floatAt(f[0], "보스 1타"); SFX.bossHit(); continue; }
+      const early = optFloat[f[0]] && now - optFloat[f[0]] < 3000; delete optFloat[f[0]];
+      if (flag === "x"){ floatAt(f[0], "지뢰 " + pts, true); SFX.mine(); continue; }
+      if (flag === "b"){ if (!early){ floatAt(f[0], "보스 1타"); SFX.bossHit(); } continue; }
       cards[f[0]].classList.add("mine");
-      floatAt(f[0], flag === "c" ? "콤보 +" + pts : flag === "bw" ? "보스 처치 +" + pts : "+" + pts);
+      if (!early || pts !== 10 || flag) floatAt(f[0], flag === "c" ? "콤보 +" + pts : flag === "bw" ? "보스 처치 +" + pts : "+" + pts);
       const t = Date.now(); combo = t - lastHitAt < 3500 ? combo + 1 : 1; lastHitAt = t;
       const cb = $("comboBox"); cb.classList.remove("hot"); void cb.offsetWidth; if (combo >= 3) cb.classList.add("hot");
-      if (flag === "c") SFX.combo(); else SFX.hit();
+      if (flag === "c") SFX.combo(); else if (!early) SFX.hit();
     }
   }
   $("board").classList.toggle("fever", G.ph === "play" && G.fv);
-  prevOwn = own; prevK = G.k || 0;
+  prevOwn = Array.from({ length:N }, (_, i) => pend[i] ? pend[i].t : (own[i] || "")).join("");
+  prevK = G.k || 0;
+  updateHints();
+}
+// 입력할 때마다 하는 가벼운 작업: 글자에 맞는 카드 강조만 바꿈
+function updateHints(){
+  const mine = myEntry();
+  const typed = mode === "player" && G.md !== "clue" && G.ph === "play" ? $("typeIn").value.trim() : "";
+  const words = G.words || [], own = G.own || "";
+  const bossI = G.bs ? G.bs[0] : -1;
+  for (let i=0;i<cards.length;i++){
+    const w = words[i] || "", o = pend[i] ? pend[i].t : own[i];
+    const on = !!(typed && w && mine && (o !== mine.t || i === bossI) && w.startsWith(typed) && !cards[i].classList.contains("gone"));
+    if (cards[i].classList.contains("hint") !== on) cards[i].classList.toggle("hint", on);
+  }
 }
 
 // ---------- header / proverb / overlay / roster ----------
@@ -799,12 +841,15 @@ function renderTop(){
   $("timer").classList.toggle("low", G.ph === "play" && left <= 10);
   $("timer").classList.toggle("fever", G.ph === "play" && G.fv);
   $("phase").textContent = roundTxt() + (({demo:"미리보기", lobby:"대기실", ready:"곧 시작", play: G.fv ? "피버 타임" : "게임 중", end: G.rd[3] || G.rd[1] <= 1 ? "게임 종료" : "라운드 종료"})[G.ph] || "");
-  const box = $("scores"); box.textContent = "";
   const byPts = G.ph === "play" || G.ph === "end" || G.ph === "demo";
   const ts = shownTeams();
   const vals = ts.map(t => byPts ? teamScore(t) : (G.ro||[]).filter(e => e.t === t).length);
   const top = Math.max(...vals);
   const mine = myEntry();
+  const sig = JSON.stringify([G.ph, ts, vals, ts.map(t => count(G.own, t)), mine && mine.t, G.rd, G.sh, G.fz, G.cb && G.cb[0]]);
+  if (sig === renderTop.sig) return;
+  renderTop.sig = sig;
+  const box = $("scores"); box.textContent = "";
   ts.forEach((t, i) => {
     const d = document.createElement("div"); d.className = "chip t" + t; d.dataset.t = t;
     if (byPts && G.ph !== "demo" && vals[i] === top && top > 0) d.classList.add("lead");
@@ -851,6 +896,12 @@ function awards(ro, dur){
 }
 
 function renderOverlay(){
+  const sig = JSON.stringify([G.ph, mode, ROOM, !!findHost(), G.off, G.md, G.rd,
+    G.ph === "ready" ? G.left : 0,
+    G.ph === "lobby" ? [(G.ro||[]).length, G.mx, G.nt] : 0,
+    G.ph === "end" ? [G.own, G.bp, G.ro, G.act, G.dur] : 0]);
+  if (sig === renderOverlay.sig) return;
+  renderOverlay.sig = sig;
   const box = $("ovBox"); box.textContent = "";
   const add = (tag, cls, txt, parent = box) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; parent.appendChild(e); return e; };
   const rules = () => {
@@ -923,8 +974,11 @@ function renderOverlay(){
 
 function renderRoster(){
   const ro = G.ro || [];
-  const box = $("teams"); box.textContent = "";
   const hostEdit = mode === "host" && H && H.ph !== "play" && H.ph !== "ready";
+  const sig = JSON.stringify([ro.map(e => [e.id, e.n, e.t, e.s, e.on]), G.nt, G.mx, hostEdit, H && H.nt, mode, H && H.kick]);
+  if (sig === renderRoster.sig) return;
+  renderRoster.sig = sig;
+  const box = $("teams"); box.textContent = "";
   for (const t of teamIds(G.nt || 2)){
     const list = ro.filter(e => e.t === t);
     const wrap = document.createElement("div"); wrap.className = "team t" + t;
@@ -936,19 +990,39 @@ function renderRoster(){
     for (const e of list){
       const li = document.createElement("li");
       if (!e.on) li.classList.add("off");
-      const w = document.createElement("span"); w.className = "who"; w.textContent = `${e.id} ${e.n}`; li.appendChild(w);
+      const w = document.createElement("span"); w.className = "who"; w.title = `${e.id} ${e.n}`;
+      w.textContent = e.n; const sm = document.createElement("small"); sm.textContent = e.id + (e.on ? "" : " · 끊김"); w.appendChild(sm); li.appendChild(w);
       if (hostEdit){
         const sel = document.createElement("select"); sel.setAttribute("aria-label", `${e.n} 팀 변경`);
         for (const o of teamIds(H.nt)){ const op = document.createElement("option"); op.value = o; op.textContent = TN[+o]; sel.appendChild(op); }
         sel.value = e.t; sel.onchange = () => hostMove(e.id, sel.value);
         li.appendChild(sel);
       } else { const s = document.createElement("span"); s.className = "s"; s.textContent = e.s; li.appendChild(s); }
+      if (mode === "host"){
+        const k = document.createElement("button"); k.type = "button"; k.className = "kick"; k.textContent = "빼기";
+        k.title = e.on ? "접속 중인 학생을 게임에서 뺍니다 (두 번 누르기)" : "끊긴 학생을 명단에서 지웁니다";
+        k.onclick = () => kickPlayer(e.id, k);
+        li.appendChild(k);
+      }
       ul.appendChild(li);
     }
     if (!list.length){ const li = document.createElement("li"); li.className = "empty"; li.textContent = "아직 없음"; ul.appendChild(li); }
     wrap.appendChild(ul); box.appendChild(wrap);
   }
   $("rosterCnt").textContent = `${ro.length} / ${G.mx || MAXP}`;
+  const offN = ro.filter(e => !e.on).length;
+  $("btnKickOff").hidden = !(mode === "host" && offN > 0);
+  $("btnKickOff").textContent = `끊긴 학생 모두 빼기 (${offN}명)`;
+  const kb = $("kickBox"), kl = mode === "host" && H ? (H.kick || []) : [];
+  kb.hidden = !kl.length; kb.textContent = "";
+  if (kl.length){
+    kb.appendChild(document.createTextNode("내보낸 학생:"));
+    for (const x of kl){
+      const s = document.createElement("span"); s.className = "kk"; s.textContent = `${x.id} ${x.n}`;
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "다시 허용"; b.onclick = () => allowPlayer(x.id);
+      s.appendChild(b); kb.appendChild(s);
+    }
+  }
 }
 
 function cwRefresh(){
@@ -1000,6 +1074,7 @@ function renderPanels(){
     const pm = $("pMsg"); pm.classList.remove("warn");
     const inGame = G.ph === "play" || G.ph === "ready";
     if (!findHost()) pm.textContent = "진행자 화면과 연결이 끊겼습니다. 진행자 화면이 다시 열리면 자동으로 이어집니다.";
+    else if (!e && (G.kk||[]).includes(me.sid)){ pm.textContent = "선생님이 이 게임에서 빼셨습니다. 선생님이 다시 허용하면 자동으로 들어갑니다."; pm.classList.add("warn"); }
     else if (!e && (G.x||[]).includes(me.sid)){ pm.textContent = `정원(${G.mx}명)이 가득 찼습니다. 자리가 나면 자동으로 입장합니다.`; pm.classList.add("warn"); }
     else if (!e && inGame && !G.lt){ pm.textContent = "지금은 게임 중이라 입장할 수 없습니다. 이번 판이 끝나면 자동으로 들어갑니다."; pm.classList.add("warn"); }
     else if (e && !e.on && inGame){ pm.textContent = "선생님이 게임 중 입장을 꺼 두었습니다. 이번 판이 끝나면 다시 참가합니다."; pm.classList.add("warn"); }
@@ -1243,7 +1318,7 @@ let composing = false;
 function clearInput(){
   const inp = $("typeIn");
   inp.value = "";
-  if (composing){ composing = false; inp.blur(); inp.value = ""; setTimeout(() => { inp.value = ""; if (!inp.disabled) inp.focus(); renderBoard(); renderPv(); }, 0); }
+  if (composing){ composing = false; inp.blur(); inp.value = ""; setTimeout(() => { inp.value = ""; if (!inp.disabled) inp.focus(); updateHints(); renderPv(); }, 0); }
   setTimeout(() => { if (inp.value && inp.value.length <= 1 && clearInput.at && Date.now() - clearInput.at < 120) inp.value = ""; }, 30);
   clearInput.at = Date.now();
 }
@@ -1260,7 +1335,7 @@ function submitWord(){
   const idxs = []; (G.words || []).forEach((x, k) => { if (x === w) idxs.push(k); });
   if (!idxs.length){
     bump(w); setPresence({ st:{ ...myStats } });
-    clearInput(); renderBoard(); renderPv();
+    clearInput(); updateHints(); renderPv();
     feedback("틀림", "no"); SFX.miss(); inp.classList.remove("shake"); void inp.offsetWidth; inp.classList.add("shake"); return;
   }
   const bossI = G.bs && idxs.includes(G.bs[0]) ? G.bs[0] : -1;
@@ -1270,6 +1345,8 @@ function submitWord(){
     feedback(idxs.some(k => G.own[k] !== e.t) ? "방패 중" : "이미 우리 팀", "no"); clearInput(); renderBoard(); return;
   }
   bump(w); claim([i, w]);
+  if (bossI < 0){ pend[i] = { w, t:e.t, at:Date.now() }; optFloat[i] = Date.now(); floatAt(i, "+10"); SFX.hit(); }
+  else { optFloat[i] = Date.now(); floatAt(i, "보스 1타"); SFX.bossHit(); }
   clearInput(); feedback(bossI >= 0 ? "보스 공격!" : "뒤집기!", "ok"); renderBoard(); renderPv();
 }
 
@@ -1277,7 +1354,8 @@ function submitWord(){
 function hostPublish(){
   const g = encode(H);
   setPresence({ role:"host", since:H.since, g });
-  H.savedAt = Date.now(); store.set("tf-host", H);
+  H.savedAt = Date.now();
+  if (!hostPublish.saveT) hostPublish.saveT = setTimeout(() => { hostPublish.saveT = 0; if (H) store.set("tf-host", H); }, 1500);
   G = decode(g); render();
 }
 
@@ -1317,15 +1395,17 @@ function reshuffle(){
   shuffle(H.ro).forEach((e, i) => { e.t = ts[i % ts.length]; });
 }
 
-function hostStartAsHost(){
+function hostStartAsHost(resume){
   if (URL_ROOM) return;
-  ROOM = store.get("tf-code") || newCode(); store.set("tf-code", ROOM);
+  if (resume !== true){ store.del("tf-host"); ROOM = newCode(); }      // 새 게임방: 항상 새 방 코드
+  else ROOM = store.get("tf-code") || newCode();                       // 새로고침: 같은 방으로 이어하기
+  store.set("tf-code", ROOM);
   qrData = ""; $("qrSmall").textContent = "";
   Shim.hostRoom(ROOM);
   ensureAudio();
-  const saved = store.get("tf-host");
+  const saved = resume === true ? store.get("tf-host") : null;
   const now = Date.now();
-  if (saved && saved.v === V && now - (saved.savedAt || 0) < 3*3600*1000){
+  if (saved && saved.v === V && now - (saved.savedAt || 0) < RESUME_MS){
     H = saved;
     if (H.ph === "play" && H.endAt <= now){ H.ph = "end"; H.pv = null; H.fv = false; H.boss = null; H.cb = null; }
     if (H.ph === "ready") H.ph = "lobby";
@@ -1333,9 +1413,9 @@ function hostStartAsHost(){
   else H = { v:V, ph:"lobby", dur:Number($("selDur").value), lang:$("selLang").value, cw:$("customWords").value, nt:Number($("selTeams").value), mx:Number($("selMax").value),
              rounds:Number($("selRounds").value), rn:0, wins:[], matchOver:false, gid:0,
              act:"", n:36, late:true, left:0, words:[], ans:null, pool:[], clue:false, own:"", it:"", ro:[], x:[], fx:[], ev:[], ek:0, bp:[], pv:null, fv:false, used:[], k:0,
-             sh:{}, fz:{}, stk:{}, boss:null, cb:null, feat:{ ...featPref } };
+             sh:{}, fz:{}, stk:{}, boss:null, cb:null, feat:{ ...featPref }, kick:[] };
   H.since = now; H.n = SIZES.includes(H.n) ? H.n : 36;
-  H.sh = H.sh || {}; H.fz = H.fz || {}; H.stk = H.stk || {}; H.wins = H.wins || []; H.feat = H.feat || { ...featPref };
+  H.sh = H.sh || {}; H.fz = H.fz || {}; H.stk = H.stk || {}; H.wins = H.wins || []; H.feat = H.feat || { ...featPref }; H.kick = H.kick || [];
   renderFeats();
   H.ro.forEach(e => { e.on = 0; });
   lastN = new Map(); bag = []; seenEk = -1;
@@ -1436,7 +1516,7 @@ function hostSync(force){
     if (pe){
       const nm = safeName(pe.presence.nm); if (nm !== e.n){ e.n = nm; changed = true; }
       const st = pe.presence.st;
-      if (st && st.g === H.gid && (st.a|0) >= 0){ const a = Math.min(9999, st.a|0), k = Math.min(99999, st.k|0); if (a !== e.a || k !== e.k){ e.a = a; e.k = k; changed = true; } }
+      if (st && st.g === H.gid && (st.a|0) >= 0){ const a = Math.min(9999, st.a|0), k = Math.min(99999, st.k|0); if (a !== e.a || k !== e.k){ e.a = a; e.k = k; } }   // 타수·시도 기록은 1초마다 오는 정기 전송에 실어 보냄
     }
   }
   if (H.ph === "lobby"){
@@ -1448,6 +1528,7 @@ function hostSync(force){
   const x = [];
   for (const [sid, pe] of present){
     if (H.ro.some(e => e.id === sid)) continue;
+    if ((H.kick || []).some(k => k.id === sid)) continue;
     if (!lateOk) continue;
     if (H.ro.length >= H.mx){ x.push(sid); continue; }
     H.ro.push({ id:sid, n:safeName(pe.presence.nm), t:pickTeam(), s:0, on:1, h:0, m:0, p:0, b:0, a:0, k:0, mn:0 });
@@ -1474,6 +1555,27 @@ function hostSync(force){
   if (changed) hostPublish();
 }
 
+function kickPlayer(id, btn){
+  if (!H) return;
+  const e = H.ro.find(r => r.id === id); if (!e) return;
+  if (e.on && !btn.dataset.arm){
+    btn.dataset.arm = "1"; btn.textContent = "확인";
+    setTimeout(() => { if (btn.isConnected){ delete btn.dataset.arm; btn.textContent = "빼기"; } }, 3000);
+    return;
+  }
+  H.ro = H.ro.filter(r => r.id !== id);
+  H.kick = H.kick || [];
+  if (e.on && !H.kick.some(x => x.id === id)) H.kick.push({ id, n:e.n });
+  $("hMsg").textContent = e.on ? `${e.id} ${e.n} 학생을 게임에서 뺐습니다. 아래 '다시 허용'을 누르면 다시 들어올 수 있습니다.` : `끊긴 ${e.id} ${e.n} 학생을 명단에서 지웠습니다. 다시 접속하면 새로 참가합니다.`;
+  hostPublish();
+}
+function allowPlayer(id){
+  if (!H) return;
+  const x = (H.kick || []).find(k => k.id === id);
+  H.kick = (H.kick || []).filter(k => k.id !== id);
+  $("hMsg").textContent = x ? `${x.id} ${x.n} 학생이 다시 들어올 수 있습니다.` : "";
+  hostSync(true);
+}
 function hostMove(sid, t){
   const e = H.ro.find(r => r.id === sid); if (!e || !okT(t) || +t >= H.nt) return;
   e.t = t; hostPublish();
@@ -1644,7 +1746,35 @@ function hostOff(){
 $("inSid").value = me.sid || ""; $("inName").value = me.nm || "";
 $("pJoin").addEventListener("submit", join);
 $("btnLeave").onclick = leave;
-$("btnHost").onclick = hostStartAsHost;
+$("btnHost").onclick = () => hostStartAsHost(false);
+$("btnKickOff").onclick = () => {
+  if (!H) return;
+  const n = H.ro.filter(e => !e.on).length;
+  H.ro = H.ro.filter(e => e.on);
+  $("hMsg").textContent = `끊긴 학생 ${n}명을 명단에서 지웠습니다. 다시 접속하면 새로 참가합니다.`;
+  hostPublish();
+};
+// 게임 도중에도 방 코드만 새로 받기 (두 번 눌러 확인)
+$("btnNewCode").onclick = () => {
+  if (!H) return;
+  const b = $("btnNewCode");
+  if (!b.dataset.arm){
+    b.dataset.arm = "1"; b.textContent = "한 번 더 누르면 코드가 바뀝니다";
+    clearTimeout(b.t); b.t = setTimeout(() => { delete b.dataset.arm; b.textContent = "방 코드 새로 받기"; }, 4000);
+    return;
+  }
+  delete b.dataset.arm; clearTimeout(b.t); b.textContent = "방 코드 새로 받기";
+  setPresence({ role:null, since:null, g:null });
+  const old = ROOM;
+  ROOM = newCode(); store.set("tf-code", ROOM);
+  qrData = ""; $("qrSmall").textContent = "";
+  H.ro = []; H.x = []; H.kick = []; H.since = Date.now();
+  if (H.ph !== "lobby"){ H.ph = "lobby"; H.words = []; H.ans = null; H.own = ""; H.it = ""; H.fx = []; H.k = 0; H.left = 0; H.act = ""; H.pv = null; H.fv = false; H.boss = null; H.cb = null; H.sh = {}; H.fz = {}; H.rn = 0; H.wins = []; H.matchOver = false; }
+  lastN = new Map(); renderOverlay.sig = renderRoster.sig = renderTop.sig = "";
+  Shim.hostRoom(ROOM);
+  $("hMsg").textContent = `방 코드를 ${old}에서 ${ROOM}(으)로 바꿨습니다. 학생들은 새 QR 코드나 링크로 다시 들어와야 합니다.`;
+  hostPublish();
+};
 $("btnStart").onclick = hostStart;
 $("btnLobby").onclick = hostLobby;
 $("btnHostOff").onclick = hostOff;
@@ -1654,7 +1784,7 @@ $("btnCopy").onclick = () => {
   try { navigator.clipboard.writeText(inviteUrl()).then(done, fallback); } catch(e){ fallback(); }
 };
 $("btnClr").addEventListener("pointerdown", e => e.preventDefault());
-$("btnClr").onclick = () => { pendingSubmit = false; clearInput(); $("typeIn").focus(); renderBoard(); renderPv(); };
+$("btnClr").onclick = () => { pendingSubmit = false; clearInput(); $("typeIn").focus(); updateHints(); renderPv(); };
 function renderFeats(){
   const box = $("featBox"); box.textContent = "";
   for (const [k, name] of FEATS){
@@ -1728,7 +1858,7 @@ ti.addEventListener("compositionend", () => { composing = false; });
 ti.addEventListener("keydown", e => {
   ensureAudio();
   if (e.key === "Escape" || (e.key === "Backspace" && (e.ctrlKey || e.altKey || e.metaKey))){
-    e.preventDefault(); pendingSubmit = false; clearInput(); feedback("지움", "no"); renderBoard(); renderPv(); return;
+    e.preventDefault(); pendingSubmit = false; clearInput(); feedback("지움", "no"); updateHints(); renderPv(); return;
   }
   if (e.key === "Enter"){
     e.preventDefault();
@@ -1744,14 +1874,15 @@ ti.addEventListener("keydown", e => {
 });
 ti.addEventListener("compositionend", () => { if (pendingSubmit){ pendingSubmit = false; setTimeout(enterSubmit, 0); } });
 ti.addEventListener("input", () => {
-  if (Date.now() < enterGuard && isLeftover(ti.value)){ ti.value = ""; renderBoard(); renderPv(); return; }
+  if (Date.now() < enterGuard && isLeftover(ti.value)){ ti.value = ""; updateHints(); renderPv(); return; }
   if (/\s$/.test(ti.value) && spaceSubmits(ti.value)){ ti.value = ti.value.trim(); submitWord(); }
-  else { renderBoard(); renderPv(); }
+  else { updateHints(); renderPv(); }
 });
 
 setInterval(hostTick, 200);
 setInterval(() => { if (mode === "player" && combo && Date.now() - lastHitAt > 3500){ combo = 0; $("myCombo").textContent = 0; } }, 500);
 if (location.hostname === "127.0.0.1") window.__tf = { get H(){ return H; }, get G(){ return G; }, hostPublish, placeItem };
+addEventListener("pagehide", () => { if (H){ H.savedAt = Date.now(); store.set("tf-host", H); } });
 renderSnd();
 render();
 
@@ -1767,7 +1898,7 @@ if (URL_ROOM){
   Shim.joinRoom(URL_ROOM);
   if (me.sid && me.nm && me.room === URL_ROOM && Date.now() - (me.at || 0) < 3*3600*1000) join({ preventDefault(){} });
 }
-else { const sv = store.get("tf-host"); if (sv && sv.v === V && store.get("tf-code") && Date.now() - (sv.savedAt || 0) < 3*3600*1000) hostStartAsHost(); }
+else { const sv = store.get("tf-host"); if (sv && sv.v === V && store.get("tf-code") && Date.now() - (sv.savedAt || 0) < RESUME_MS) hostStartAsHost(true); }
 render();
 })();
 </script>

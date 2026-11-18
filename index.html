@@ -149,6 +149,10 @@ button{cursor:pointer}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
 .btn.go{background:var(--ok);color:var(--bg);font-family:var(--f-arcade);font-weight:400;font-size:1.1rem}
 .msg{font-size:.85rem;color:var(--muted);margin:0}
+.feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.feats label{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:.88rem;cursor:pointer;min-width:0}
+.feats input{width:18px;height:18px;margin:0;accent-color:var(--ok);flex:none}
+.feats label:has(input:not(:checked)){opacity:.55}
 .tog{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer}
 .tog input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ok);flex:none}
 .tog b{display:block;font-weight:700}
@@ -189,7 +193,7 @@ button{cursor:pointer}
 .shake{animation:shake .25s}
 
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;width:100%;resize:vertical;font:inherit;font-size:.85rem;line-height:1.45}
-.card.boss{box-shadow:0 0 0 3px var(--gold),0 0 22px color-mix(in srgb,var(--gold) 55%,transparent);animation:bossPulse 1s ease-in-out infinite alternate;z-index:2}
+.card.boss{background:linear-gradient(135deg,#5b4300,#2b1f4a);border-bottom-color:#1a1230;color:#fff4cc;text-shadow:0 2px 0 #000a;box-shadow:0 0 0 3px var(--gold),0 0 22px color-mix(in srgb,var(--gold) 55%,transparent);animation:bossPulse 1s ease-in-out infinite alternate;z-index:2}
 @keyframes bossPulse{to{box-shadow:0 0 0 5px var(--gold),0 0 34px color-mix(in srgb,var(--gold) 70%,transparent)}}
 .card .hp{position:absolute;left:8px;right:34px;bottom:5px;height:5px;border-radius:3px;background:#0007;overflow:hidden}
 .card .hp i{display:block;height:100%;background:var(--gold)}
@@ -318,6 +322,7 @@ button{cursor:pointer}
           <div class="invite"><div id="qrSmall" class="qr"></div><div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1"><span id="inviteUrl" class="url"></span><button type="button" id="btnCopy" class="btn ghost">링크 복사</button><a id="lnkPlayer" class="btn ghost" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">참가자 화면 열어 보기</a></div></div>
         </div>
         <button type="button" id="btnShuffle" class="btn ghost">팀 무작위 재배치</button>
+        <div class="field"><label>아이템·이벤트 (체크한 것만 나옵니다)</label><div id="featBox" class="feats"></div></div>
         <label class="tog" for="chkLate"><input type="checkbox" id="chkLate" checked><span><b>게임 중 입장 허용</b><small>끄면 게임 중에는 튕긴 학생과 새 학생 모두 다음 판부터 들어옵니다.</small></span></label>
         <div class="row">
           <button type="button" id="btnStart" class="btn go">게임 시작</button>
@@ -588,6 +593,9 @@ let prevWordsShown = [];
 let prevOwn = "", prevK = 0, bag = [], seenEk = -1;
 let combo = 0, lastHitAt = 0, frozenUntil = 0;
 
+const FEATS = [["m","미사일"],["i","먹물"],["f","얼음"],["s","방패"],["x","지뢰"],["boss","보스 카드"],["storm","카드 폭풍"],["cb","역전 찬스"],["pv","속담 찬스"],["combo","콤보 보너스"],["fever","피버 타임"]];
+let featPref = store.get("tf-feat") || {};
+const feat = k => { const f = (H && H.feat) || featPref; return f[k] !== false; };
 const BOSS_HP = 5, BOSS_PTS = 40, PV_PTS = 30, MINE_PTS = 20, COMBO_PTS = 10;
 const ITEM_NAME = { m:"미사일", i:"먹물", f:"얼음", s:"방패" };
 
@@ -659,8 +667,9 @@ function demoState(){
   const w = shuffle(KO).slice(0, 36);
   let own = ""; for (let i=0;i<36;i++) own += String((i + Math.floor(i/6)) % 2);
   const it = ".".repeat(36).split(""); it[7] = "m"; it[22] = "i"; it[15] = "f"; it[30] = "s";
+  own = own.slice(0, 9) + "-" + own.slice(10);
   return { ph:"demo", n:36, dur:120, left:120, nt:2, mx:30, act:"01", md:"", words:w, own, it:it.join(""), ro:[], x:[], fx:[], ev:[], ek:0,
-    bp:[0,0], pv:null, fv:false, lt:true, k:0, sh:"", fz:"", bs:[9, {}, 20], cb:null, rd:[1,1,[],0], gid:0 };
+    bp:[0,0], pv:null, fv:false, lt:true, k:0, sh:"", fz:"", bs:[9, {}, 20], cb:null, rd:[1,1,[],0], gid:0, off:[] };
 }
 G = demoState();
 
@@ -676,7 +685,7 @@ function encode(S){
     sh:live(S.sh), fz:live(S.fz),
     bs:S.boss ? [S.boss.i, S.boss.hits, Math.max(0, Math.ceil((S.boss.end - now)/1000))] : null,
     cb:S.cb && S.cb.end > now ? [S.cb.t, Math.ceil((S.cb.end - now)/1000)] : null,
-    rd:[S.rn || 1, S.rounds || 1, S.wins || [], S.matchOver ? 1 : 0], gid:S.gid|0 };
+    rd:[S.rn || 1, S.rounds || 1, S.wins || [], S.matchOver ? 1 : 0], gid:S.gid|0, off:FEATS.map(f => f[0]).filter(k => S.feat && S.feat[k] === false) };
 }
 function decode(g){
   if (!g || g.v !== V || !Array.isArray(g.words) || !Array.isArray(g.ro)) return null;
@@ -694,7 +703,7 @@ function decode(g){
     bs:Array.isArray(g.bs) && Number.isInteger(g.bs[0]) ? [g.bs[0], hits(g.bs[1]), g.bs[2]|0] : null,
     cb:Array.isArray(g.cb) && okT(g.cb[0]) ? [g.cb[0], g.cb[1]|0] : null,
     rd:Array.isArray(g.rd) ? [g.rd[0]|0 || 1, g.rd[1]|0 || 1, Array.isArray(g.rd[2]) ? g.rd[2].map(n => n|0) : [], g.rd[3] ? 1 : 0] : [1,1,[],0],
-    gid:g.gid|0 };
+    gid:g.gid|0, off:Array.isArray(g.off) ? g.off.filter(k => typeof k === "string").slice(0, 20) : [] };
 }
 const pvText = () => G.pv ? PV[G.pv.i] : "";
 const pvLeft = () => G.pv ? G.pv.left : 0;
@@ -846,16 +855,20 @@ function renderOverlay(){
   const add = (tag, cls, txt, parent = box) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; parent.appendChild(e); return e; };
   const rules = () => {
     const r = add("div", "rules");
-    [["단어 뒤집기", "다른 팀 색 카드의 단어를 치면 우리 팀 카드가 됩니다. +10점"],
-     ["속담 찬스", "금색 속담을 먼저 완성하면 +30점"],
-     ["보스 카드", "같은 팀이 보스 단어를 5번 맞히면 +40점, 카드도 차지합니다."],
-     ["미사일", "1등 팀 카드 3장을 빼앗습니다."],
-     ["먹물", "다른 팀 화면에 먹물을 뿌립니다. 문질러 닦으세요."],
-     ["얼음", "다른 팀 입력창을 3초 동안 얼립니다."],
-     ["방패", "5초 동안 우리 팀 카드를 지킵니다."],
-     ["지뢰", "어딘가 숨어 있는 함정 카드. 뒤집으면 -20점"],
-     ["콤보", "3초 안에 5번 연속 성공하면 +10점"],
-     ["역전 찬스·피버", "뒤처진 팀은 잠깐 점수 2배, 마지막 10초는 모두 2배"]]
+    const off = G.off || [];
+    [["단어 뒤집기", "다른 팀 색 카드의 단어를 치면 우리 팀 카드가 됩니다. +10점", ""],
+     ["속담 찬스", "금색 속담을 먼저 완성하면 +30점", "pv"],
+     ["보스 카드", "어느 팀 것도 아닌 금색 카드. 먼저 5번 맞힌 팀이 +40점과 카드를 가져갑니다.", "boss"],
+     ["미사일", "1등 팀 카드 3장을 빼앗습니다.", "m"],
+     ["먹물", "다른 팀 화면에 먹물을 뿌립니다. 문질러 닦으세요.", "i"],
+     ["얼음", "다른 팀 입력창을 잠깐 얼립니다. 팀이 적을수록 드물고 짧습니다.", "f"],
+     ["방패", "잠깐 우리 팀 카드를 지킵니다. 팀이 적을수록 드물고 짧습니다.", "s"],
+     ["지뢰", "어딘가 숨어 있는 함정 카드. 뒤집으면 -20점", "x"],
+     ["카드 폭풍", "게임 중간에 카드 위치가 한 번 뒤섞입니다.", "storm"],
+     ["콤보", "3초 안에 5번 연속 성공하면 +10점", "combo"],
+     ["역전 찬스", "뒤처진 팀은 10초 동안 점수 2배", "cb"],
+     ["피버 타임", "마지막 10초는 모든 점수 2배", "fever"]]
+      .filter(x => !x[2] || !off.includes(x[2]))
       .forEach(([b, s]) => { const d = add("div", "", null, r); add("b", "", b, d); d.appendChild(document.createTextNode(s)); });
   };
   let show = true;
@@ -1122,10 +1135,12 @@ function runEv(e){
     if (idxs && idxs.length){ toast(`${TN[+t] || ""} 팀 미사일 발사 → ${TN[+target] || ""} 팀`, t); SFX.missile(); missileFly(t, idxs); }
     else toast("미사일이 방패에 막혔습니다", t);
   } else if (type === "ice"){
-    toast(`${TN[+t] || ""} 팀 얼음 공격! 3초 동안 입력 정지`, t); SFX.ice();
-    if (mode === "player" && inMatch && mine.t !== t){ frozenUntil = Date.now() + 3000; setTimeout(render, 3050); }
+    const ms = Math.min(3000, Math.max(500, +target || 1500)), sec = String(Math.round(ms / 100) / 10);
+    toast(`${TN[+t] || ""} 팀 얼음 공격! ${sec}초 동안 입력 정지`, t); SFX.ice();
+    if (mode === "player" && inMatch && mine.t !== t){ frozenUntil = Date.now() + ms; setTimeout(render, ms + 50); }
   } else if (type === "shield"){
-    toast(`${TN[+t] || ""} 팀 방패 5초!`, t); SFX.shield();
+    const ms = Math.min(5000, Math.max(500, +target || 2000)), sec = String(Math.round(ms / 100) / 10);
+    toast(`${TN[+t] || ""} 팀 방패 ${sec}초!`, t); SFX.shield();
   } else if (type === "mine"){
     toast(`지뢰! ${nameOf(sid)} -${MINE_PTS}점`, t); SFX.mine(); boomAt(idxs);
   } else if (type === "storm"){
@@ -1318,9 +1333,10 @@ function hostStartAsHost(){
   else H = { v:V, ph:"lobby", dur:Number($("selDur").value), lang:$("selLang").value, cw:$("customWords").value, nt:Number($("selTeams").value), mx:Number($("selMax").value),
              rounds:Number($("selRounds").value), rn:0, wins:[], matchOver:false, gid:0,
              act:"", n:36, late:true, left:0, words:[], ans:null, pool:[], clue:false, own:"", it:"", ro:[], x:[], fx:[], ev:[], ek:0, bp:[], pv:null, fv:false, used:[], k:0,
-             sh:{}, fz:{}, stk:{}, boss:null, cb:null };
+             sh:{}, fz:{}, stk:{}, boss:null, cb:null, feat:{ ...featPref } };
   H.since = now; H.n = SIZES.includes(H.n) ? H.n : 36;
-  H.sh = H.sh || {}; H.fz = H.fz || {}; H.stk = H.stk || {}; H.wins = H.wins || [];
+  H.sh = H.sh || {}; H.fz = H.fz || {}; H.stk = H.stk || {}; H.wins = H.wins || []; H.feat = H.feat || { ...featPref };
+  renderFeats();
   H.ro.forEach(e => { e.on = 0; });
   lastN = new Map(); bag = []; seenEk = -1;
   mode = "host"; prevOwn = "";
@@ -1378,13 +1394,13 @@ function handleClaim(e, sid, i, w, now){
   setOwn(i, e.t); replaceCard(i);
   const st = H.stk[sid] || { t:0, n:0 }; st.n = now - st.t < 3000 ? st.n + 1 : 1; st.t = now; H.stk[sid] = st;
   let pts = 10 * mult, flag = "";
-  if (st.n % 5 === 0){ pts += COMBO_PTS; flag = "c"; }
+  if (st.n % 5 === 0 && feat("combo")){ pts += COMBO_PTS; flag = "c"; }
   e.s += pts; e.h = (e.h|0) + 1;
   H.bp[+e.t] = (H.bp[+e.t] || 0) + pts - 10;
   H.k++; H.fx = H.fx.concat([[i, e.t, sid, H.k, pts, flag]]).slice(-8);
   if (item === "i") pushEv("ink", e.t, sid);
-  if (item === "f"){ for (const t of others) H.fz[t] = now + 3000; pushEv("ice", e.t, sid); }
-  if (item === "s"){ H.sh[e.t] = now + 5000; pushEv("shield", e.t, sid); }
+  if (item === "f"){ const ms = itemCfg().ice; for (const t of others) H.fz[t] = now + ms; pushEv("ice", e.t, sid, [], String(ms)); }
+  if (item === "s"){ const ms = itemCfg().shield; H.sh[e.t] = now + ms; pushEv("shield", e.t, sid, [], String(ms)); }
   if (item === "m"){
     const avail = others.filter(t => !((H.sh[t] || 0) > now));
     if (avail.length){
@@ -1474,8 +1490,22 @@ function placeItem(){
   const bi = H.boss ? H.boss.i : -1;
   const free = []; for (let i=0;i<H.n;i++) if (H.it[i] === "." && i !== bi) free.push(i);
   if (!free.length) return;
-  const r = Math.random();
-  setIt(pick(free), r < .25 ? "m" : r < .48 ? "i" : r < .66 ? "f" : r < .82 ? "s" : "x");
+  const c = itemCfg();
+  const onBoard = ch => H.it.includes(ch);
+  const fw = onBoard("f") ? 0 : c.fw, sw = onBoard("s") ? 0 : c.sw;   // 얼음·방패는 판에 한 장씩만
+  const w = [["m", .26], ["i", .26], ["x", .16], ["f", fw], ["s", sw]].filter(x => feat(x[0]));
+  if (!w.length) return;
+  let r = Math.random() * w.reduce((a, b) => a + b[1], 0), pickCh = "m";
+  for (const [ch, v] of w){ if ((r -= v) < 0){ pickCh = ch; break; } }
+  setIt(pick(free), pickCh);
+}
+// 팀 수에 따라 얼음·방패의 빈도(가중치)와 지속 시간을 조절
+function itemCfg(){
+  const n = Math.max(2, (H && H.act ? H.act.length : 2));
+  if (n <= 2) return { fw:.04, sw:.04, ice:1500, shield:2000 };
+  if (n === 3) return { fw:.08, sw:.08, ice:2000, shield:3000 };
+  if (n <= 5) return { fw:.12, sw:.12, ice:2500, shield:4000 };
+  return { fw:.18, sw:.16, ice:3000, shield:5000 };
 }
 const itemCount = () => [...H.it].filter(c => c !== ".").length;
 
@@ -1487,8 +1517,19 @@ function spawnBoss(now){
     const longs = H.pool.filter(w => [...w].length >= 4 && !H.words.includes(w));
     if (longs.length) H.words[i] = pick(longs);
   }
+  setOwn(i, "-");                       // 어느 팀 것도 아닌 중립 카드
   H.boss = { i, hits:{}, end: now + 25000 };
   pushEv("boss", "", "", [i]);
+}
+// 보스가 시간 안에 처치되지 않으면: 가장 많이 맞힌 팀이 차지, 아무도 못 맞혔으면 무작위 팀
+function bossEscape(){
+  if (!H.boss) return;
+  const i = H.boss.i, hits = H.boss.hits, ts = H.act.split("");
+  const best = Math.max(0, ...ts.map(t => hits[t] || 0));
+  const top = ts.filter(t => (hits[t] || 0) === best);
+  setOwn(i, best > 0 && top.length === 1 ? top[0] : pick(ts));
+  replaceCard(i);
+  H.boss = null;
 }
 function storm(){
   const perm = shuffle([...Array(H.n).keys()]);
@@ -1534,6 +1575,7 @@ function hostStart(){
 }
 
 function endRound(){
+  bossEscape();
   H.ph = "end"; H.left = 0; H.pv = null; H.fv = false; H.boss = null; H.cb = null; H.sh = {}; H.fz = {};
   const ts = H.act.split("");
   const sc = ts.map(t => count(H.own, t) * 10 + (H.bp[+t] || 0));
@@ -1570,17 +1612,17 @@ function hostTick(){
     if (l <= 0){ endRound(); return; }
     let ch = l !== H.left; H.left = l;
     const f = (H.dur - l) / H.dur;
-    const fv = l <= 10;
+    const fv = l <= 10 && feat("fever");
     if (fv !== H.fv){ H.fv = fv; if (fv) pushEv("fv"); ch = true; }
     if (now >= H.nextIt){ H.nextIt = now + 4000 + Math.random()*4000; if (itemCount() < Math.round(H.n/9)){ placeItem(); ch = true; } }
     if (!H.clue){
       if (H.pv && now >= H.pv.end){ H.pv = null; H.nextPv = now + 12000; ch = true; }
-      if (!H.pv && now >= H.nextPv && l > 14){ H.pv = { i:pickPv(), end: now + 15000 }; pushEv("pvon"); ch = true; }
+      if (!H.pv && now >= H.nextPv && l > 14 && feat("pv")){ H.pv = { i:pickPv(), end: now + 15000 }; pushEv("pvon"); ch = true; }
     }
-    if (!H.didBoss && f >= .3 && l > 20){ H.didBoss = true; spawnBoss(now); ch = true; }
-    if (H.boss && now >= H.boss.end){ H.boss = null; pushEv("bossx"); ch = true; }
-    if (!H.didStorm && f >= .5 && l > 12){ H.didStorm = true; storm(); ch = true; }
-    if (!H.didCb && f >= .6 && l > 12){
+    if (!H.didBoss && f >= .3 && l > 20 && feat("boss")){ H.didBoss = true; spawnBoss(now); ch = true; }
+    if (H.boss && now >= H.boss.end){ bossEscape(); pushEv("bossx"); ch = true; }
+    if (!H.didStorm && f >= .5 && l > 12 && feat("storm")){ H.didStorm = true; storm(); ch = true; }
+    if (!H.didCb && f >= .6 && l > 12 && feat("cb")){
       H.didCb = true;
       const ts = H.act.split(""); const sc = ts.map(t => count(H.own, t) * 10 + (H.bp[+t] || 0));
       const lo = Math.min(...sc), hi = Math.max(...sc);
@@ -1613,6 +1655,34 @@ $("btnCopy").onclick = () => {
 };
 $("btnClr").addEventListener("pointerdown", e => e.preventDefault());
 $("btnClr").onclick = () => { pendingSubmit = false; clearInput(); $("typeIn").focus(); renderBoard(); renderPv(); };
+function renderFeats(){
+  const box = $("featBox"); box.textContent = "";
+  for (const [k, name] of FEATS){
+    const lab = document.createElement("label"); lab.htmlFor = "ft_" + k;
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "ft_" + k; cb.checked = feat(k);
+    cb.onchange = () => setFeat(k, cb.checked);
+    lab.append(cb, document.createTextNode(name)); box.appendChild(lab);
+  }
+}
+function setFeat(k, on){
+  featPref = { ...featPref, [k]: on }; store.set("tf-feat", featPref);
+  if (!H) return;
+  H.feat = { ...(H.feat || {}), [k]: on };
+  if (!on){
+    if (k.length === 1 && H.it) H.it = H.it.split(k).join(".");                       // 판에 있던 그 아이템 카드 없애기
+    if (k === "boss" && H.boss){ bossEscape(); }
+    if (k === "pv") H.pv = null;
+    if (k === "cb") H.cb = null;
+    if (k === "fever") H.fv = false;
+    if (k === "f") H.fz = {};
+    if (k === "s") H.sh = {};
+  }
+  const name = (FEATS.find(f => f[0] === k) || [k, k])[1];
+  const last = name.charCodeAt(name.length - 1), josa = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 ? "을" : "를";
+  $("hMsg").textContent = `${name}${josa} ${on ? "켰습니다" : "껐습니다"}.`;
+  hostPublish();
+}
+renderFeats();
 $("btnSnd").onclick = () => { soundOn = !soundOn; store.set("tf-snd", soundOn); if (soundOn) ensureAudio(); renderSnd(); };
 $("btnShuffle").onclick = () => { if (!H) return; reshuffle(); $("hMsg").textContent = "팀을 무작위로 다시 나눴습니다."; hostPublish(); };
 $("chkLate").onchange = () => {
@@ -1681,7 +1751,7 @@ ti.addEventListener("input", () => {
 
 setInterval(hostTick, 200);
 setInterval(() => { if (mode === "player" && combo && Date.now() - lastHitAt > 3500){ combo = 0; $("myCombo").textContent = 0; } }, 500);
-if (location.hostname === "127.0.0.1") window.__tf = { get H(){ return H; }, get G(){ return G; }, hostPublish };
+if (location.hostname === "127.0.0.1") window.__tf = { get H(){ return H; }, get G(){ return G; }, hostPublish, placeItem };
 renderSnd();
 render();
 
